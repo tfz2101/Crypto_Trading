@@ -7,7 +7,7 @@ from ML_Trading import Signals_Testing as st
 
 
 
-
+#Takes fixed internal price and volume time series and transforms it into a fixed volume time series
 def getFixedVolumeData(orig_data, size):
     #@FORMAT: orig_data = df(price, volume, index=dates)
     out = []
@@ -53,6 +53,7 @@ def getFixedVolumeData(orig_data, size):
                 print('remaining size left',curBlock['sizeLeft'])
                 data.iloc[i,1] = 0
                 print('size depleted',data.iloc[i, 1])
+
 
     #RETURN: [end_time, VWAP, num_trades]
     return out
