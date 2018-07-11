@@ -52,9 +52,6 @@ START = END - lookback
 
 #@TODO: FIX DATE TIME CONVERSION - IT'S NOT FEEDING BACK TO THE HISTORICAL DATA CORRECTLY!!!!!
 
-#START = convertDateToISO8601(END-lookback)
-#END = datetime.isoformat(END)
-
 print('START',START)
 print('END',END)
 
