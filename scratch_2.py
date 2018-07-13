@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import sys
+import datetime as datetime
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
@@ -32,7 +33,7 @@ def getFixedVolumeData(orig_data, size):
                 curBlock['time'].append(data.index.values[i])
                 end_time = curBlock['time'][-1]
                 try:
-                   vwap = sumproduct(curBlock['prices'], curBlock['sizes'])
+                   vwap = sumproduct(curBlock['prices'], curBlock['sizes'])/sum(curBlock['sizes'])
                    print('vwap', vwap)
                 except:
                     print('curblock prices',curBlock['prices'])
@@ -52,12 +53,14 @@ def getFixedVolumeData(orig_data, size):
         #attach original data to a block point that coincides or precedes it
         if len(out) <= 0:
             fullout.append([orig_data.index.values[i], orig_data.iloc[i, 0], orig_data.iloc[i, 1]])
-        elif orig_data.index.values[i] >= out[len(out)-1][0]:
-            print('out len',([orig_data.index.values[i], orig_data.iloc[i,0], orig_data.iloc[i,1], orig_data.iloc[i,2]] + out[len(out)-1]))
-            fullout.append(([orig_data.index.values[i], orig_data.iloc[i,0], orig_data.iloc[i,1], orig_data.iloc[i,2]] + out[len(out)-1]))
+        elif orig_data.index.values[i] <= out[len(out)-1][0]:
+            row = [orig_data.index.values[i], orig_data.iloc[i,0], orig_data.iloc[i,1], orig_data.iloc[i,2]] + out[len(out)-1]
+            print('row', type(orig_data.index.values[i]))
+            fullout.append(row)
         elif orig_data.index.values[i] < out[len(out)-1][0]:
-            print('out len', ([orig_data.index.values[i], orig_data.iloc[i,0], orig_data.iloc[i,1]] + out[len(out)-2]))
-            fullout.append(([orig_data.index.values[i], orig_data.iloc[i,0], orig_data.iloc[i,1], orig_data.iloc[i,2]] + out[len(out)-2]))
+            row = [orig_data.index.values[i], orig_data.iloc[i,0], orig_data.iloc[i,1]] + [''] * len(out)
+            print('row', type(orig_data.index.values[i]))
+            fullout.append(row)
 
     #RETURN: [end_time, VWAP, num_trades], [time, price, size, side, end_time, VWAP, num_trades]
     return out, fullout
@@ -94,14 +97,23 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     # RETURN: df([ORIGINAL FEATURES], exec_price, index=dates)
     return data
 
-data = pd.read_excel('streaming_tick_data.xlsx', sheetname='test_data', index_col='time')
+data = pd.read_excel('streaming_tick_data1.xlsx', sheetname='refined_data', index_col='time')
 
-block_data, full_block_data = getFixedVolumeData(data, 1)
+#Convert unicode time index to datetime index
+timeindex =  data.index.values
+for i in range(0, timeindex.shape[0]):
+    timeindex[i] = datetime.datetime.strptime(timeindex[i], '%Y-%m-%dT%H:%M:%S.%f')
+    print('time index', timeindex[i])
 
-full_block_data = pd.DataFrame(full_block_data, columns=["time", "price", "size", "side", "end_time", "VWAP", "num_trades"])
-full_block_data = full_block_data.set_index('time')
-full_data_next_level = getNextExecutionLevel(full_block_data, 1, 'sell', 'next_buy_level')
-full_data_next_level2 = getNextExecutionLevel(full_data_next_level, 1, 'buy', 'next_sell_level')
-print('full data next level', full_data_next_level2)
+data = data.set_index(timeindex)
+block_data, full_block_data = getFixedVolumeData(data, 5)
 
-st.write(full_data_next_level2,'fixed_volume_streaming_data_execpxes.xlsx','Sheet1')
+block_data = pd.DataFrame(block_data, columns=["end_time", "VWAP", "num_trades"])
+block_data = block_data.set_index('end_time')
+st.write(block_data, 'fixed_volume_streaming_data1.xlsx','Sheet1')
+
+data_next_level = getNextExecutionLevel(data, 5, 'sell', 'next_buy_level')
+data_next_level2 = getNextExecutionLevel(data_next_level, 5, 'buy', 'next_sell_level')
+print('data next level', data_next_level2)
+
+st.write(data_next_level2,'fixed_volume_streaming_data_execpxes1.xlsx','Sheet1')
