@@ -26,13 +26,16 @@ message = {
     ],
     #Channel Types: heartbeat, ticker, snapshot, l2update
     "channels": [
-        "ticker",
+        "level2",
+        #"heartbeat",
+        #"ticker",
 
         {
             "name": "ticker",
             "product_ids": [
                 "ETH-USD",
                 #"BTC-USD"
+
             ]
         }
     ]
@@ -74,7 +77,7 @@ def getTickerChannelData(listData):
     return pd.DataFrame(data,columns=['time','price','side','last_size','best_bid','best_ask','trade_id'])
 
 data = getTickerChannelData(resultList)
-st.write(data,'streaming_tick_data7.xlsx','sheet1')
+#st.write(data,'streaming_tick_data7.xlsx','sheet1')
 
 '''
 with open('../btc_usd.json', 'w') as fp:
