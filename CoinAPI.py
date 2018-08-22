@@ -1,23 +1,27 @@
 import requests
 import pandas as pd
 import numpy as np
-import tablib
+
+import json
 import sys
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
 
-url = 'https://rest.coinapi.io/v1/orderbooks/BITSTAMP_SPOT_BTC_USD/history?time_start=2018-08-17T00:00:00'
+url = 'https://rest.coinapi.io/v1/orderbooks/BITSTAMP_SPOT_BTC_USD/history?time_start=2018-08-17T00:00:00&limit=100000'
 headers = {'X-CoinAPI-Key' : '7C973F6B-9E95-49DA-8E9E-55F35FC3092F', 'Accept' : 'application/json'}
 response = requests.get(url, headers=headers)
 
 data = response.json()
 print(data)
 
+with open('coinapi.json', 'w') as outfile:
+    json.dump(data, outfile)
+
 def getTickerChannelData(listData):
     #EXPECTS A LIST OF DICTIONARIES
     def toUnicode(string):
-        return  unicode(string, "utf-8")
+        return unicode(string, "utf-8")
 
     data = []
     for d in listData:
@@ -35,6 +39,3 @@ def getTickerChannelData(listData):
     return pd.DataFrame(data,columns=['time','price','side','last_size','best_bid','best_ask','trade_id'])
 
 
-
-#new_data = tablib.Dataset(data)
-#open('coinapi.xls', 'wb').write(new_data.xls)
