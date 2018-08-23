@@ -97,7 +97,7 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     # RETURN: df([ORIGINAL FEATURES], exec_price, index=dates)
     return data
 
-data = pd.read_excel('streaming_tick_data1.xlsx', sheetname='refined_data', index_col='time')
+data = pd.read_excel('streaming_tick_data3.xlsx', sheetname='refined_data', index_col='time')
 
 #Convert unicode time index to datetime index
 timeindex =  data.index.values
@@ -116,4 +116,4 @@ data_next_level = getNextExecutionLevel(data, 5, 'sell', 'next_buy_level')
 data_next_level2 = getNextExecutionLevel(data_next_level, 5, 'buy', 'next_sell_level')
 print('data next level', data_next_level2)
 
-st.write(data_next_level2,'fixed_volume_streaming_data_execpxes1.xlsx','Sheet1')
+st.write(data_next_level2,'fixed_volume_streaming_data_execpxes3.xlsx','Sheet1')

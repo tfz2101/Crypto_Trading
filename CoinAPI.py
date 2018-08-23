@@ -8,8 +8,8 @@ sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
 
-url = 'https://rest.coinapi.io/v1/orderbooks/BITSTAMP_SPOT_BTC_USD/history?time_start=2018-08-17T00:00:00&limit=100000'
-headers = {'X-CoinAPI-Key' : '7C973F6B-9E95-49DA-8E9E-55F35FC3092F', 'Accept' : 'application/json'}
+url = 'https://rest.coinapi.io/v1/orderbooks/BITSTAMP_SPOT_BTC_USD/history?time_start=2018-08-17T00:00:00'
+headers = {'X-CoinAPI-Key' : '7C973F6B-9E95-49DA-8E9E-55F35FC3092F'}
 response = requests.get(url, headers=headers)
 
 data = response.json()
