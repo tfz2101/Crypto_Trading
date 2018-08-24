@@ -10,14 +10,6 @@ from pytz import timezone
 import sys
 from coinmarketcap import Market
 
-
-sys.path.append('../')
-from ML_Trading import ML_functions as mlfcn
-from ML_Trading import Signals_Testing as st
-
-
-logfile = open("logfile.txt", "a+")
-logfile.truncate()
 public_client = gdax.PublicClient()
 
 MODE = 'REAL'
