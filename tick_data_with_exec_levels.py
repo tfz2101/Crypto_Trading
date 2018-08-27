@@ -98,8 +98,8 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     # RETURN: df([ORIGINAL FEATURES], exec_price, index=dates)
     return data
 
-data = pd.read_excel('streaming_tick_data3.xlsx', sheetname='refined_data', index_col='time')
-SIZE = 1
+data = pd.read_excel('eth_dataset_08_20_2018.xlsx', sheetname='refined_data', index_col='time')
+BLOCK_SIZE = 5
 
 #Convert unicode time index to datetime index
 timeindex =  data.index.values
@@ -107,17 +107,19 @@ for i in range(0, timeindex.shape[0]):
     timeindex[i] = datetime.datetime.strptime(timeindex[i], '%Y-%m-%dT%H:%M:%S.%f')
     #print('time index', timeindex[i])
 
-data = data.set_index(timeindex)
-block_data, full_block_data = getFixedVolumeData(data, SIZE)
-col_name = ['time', 'price', 'size', 'side', 'end_time', 'VWAP', 'num_trades']
-full_block_data = pd.DataFrame(full_block_data, columns=col_name)
-full_block_data = full_block_data.set_index('end_time')
-#st.write(full_block_data, 'fixed_volume_streaming_data3.xlsx','Sheet1')
-print('full block data', full_block_data)
 
-print('data', data)
-data_next_level = getNextExecutionLevel(data, SIZE, 'sell', 'next_buy_level')
-#data_next_level2 = getNextExecutionLevel(data_next_level, SIZE, 'buy', 'next_sell_level')
+data = data.set_index(timeindex)
+block_data, full_block_data = getFixedVolumeData(data, BLOCK_SIZE)
+#col_name = ['time', 'price', 'size', 'side', 'end_time', 'VWAP', 'num_trades']
+col_name = ['end_time','vwap', 'num_trades']
+block_data = pd.DataFrame(block_data, columns=col_name)
+block_data = block_data.set_index('end_time')
+st.write(block_data, 'fixed_volume_streaming_data_VWAP_8_20_2018.xlsx','Sheet1')
+print('block data', block_data)
+
+EXEC_SIZE = 1
+data_next_level = getNextExecutionLevel(data, EXEC_SIZE, 'sell', 'next_buy_level')
+data_next_level2 = getNextExecutionLevel(data_next_level, EXEC_SIZE, 'buy', 'next_sell_level')
 print('data next level', data_next_level)
 
-#st.write(data_next_level2,'fixed_volume_streaming_data_execpxes3.xlsx','Sheet1')
+st.write(data_next_level2,'fixed_volume_streaming_data_execpxes_8_20_2018.xlsx','Sheet1')
