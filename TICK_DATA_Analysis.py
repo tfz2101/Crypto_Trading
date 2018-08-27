@@ -42,7 +42,8 @@ class DTCAnalyzer():
         graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
         Image(graph.create_png())
 
-
+    def getDecisionPath(self):
+        return self.DTC.decision_path(self.X)
 
 def sumproduct(list1, list2):
     sum = 0
@@ -172,4 +173,4 @@ dtc_analyzer.fitDTC()
 r_2 = dtc_analyzer.getR_2()
 print('r 2', r_2)
 
-dtc_analyzer.showTreeGraph()
+print('decision path',dtc_analyzer.getDecisionPath())
