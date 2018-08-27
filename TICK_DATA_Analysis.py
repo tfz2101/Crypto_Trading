@@ -5,6 +5,43 @@ import datetime as datetime
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
+from sklearn.tree import DecisionTreeRegressor as DTC
+
+from sklearn.externals.six import StringIO
+from IPython.display import Image
+from sklearn.tree import export_graphviz
+import pydotplus
+
+
+
+
+#Class for Decision Tree Regressors analysis on datasets
+class DTCAnalyzer():
+    def __init__(self, data, **kwarg):
+        #@FORMAT: data = df('Y', signal1, signal2, etc, index=dates)
+        self.orig_data = data
+        self.data = self.orig_data.dropna()
+        self.DTC = DTC()
+        self.Y = self.data['Y']
+        self.X = self.data.drop('Y')
+
+    def fitDTC(self):
+        print('Y', self.Y)
+        print('X', self.X)
+        self.DTC.fit(self.X, self.Y)
+
+
+    def getR_2(self):
+        return self.DTC.score(self.X, self.Y)
+
+    def showTreeGraph(self):
+        dot_data = StringIO()
+        export_graphviz(self.DTC, out_file=dot_data,
+                        filled=True, rounded=True,
+                        special_characters=True)
+        graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+        Image(graph.create_png())
+
 
 
 def sumproduct(list1, list2):
@@ -98,7 +135,7 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     # RETURN: df([ORIGINAL FEATURES], exec_price, index=dates)
     return data
 
-data = pd.read_excel('eth_dataset_08_20_2018.xlsx', sheetname='refined_data', index_col='time')
+data = pd.read_excel('streaming_tick_data4.xlsx', sheetname='refined_data', index_col='time')
 BLOCK_SIZE = 5
 
 #Convert unicode time index to datetime index
@@ -107,14 +144,15 @@ for i in range(0, timeindex.shape[0]):
     timeindex[i] = datetime.datetime.strptime(timeindex[i], '%Y-%m-%dT%H:%M:%S.%f')
     #print('time index', timeindex[i])
 
-
 data = data.set_index(timeindex)
+
+'''
 block_data, full_block_data = getFixedVolumeData(data, BLOCK_SIZE)
 #col_name = ['time', 'price', 'size', 'side', 'end_time', 'VWAP', 'num_trades']
 col_name = ['end_time','vwap', 'num_trades']
 block_data = pd.DataFrame(block_data, columns=col_name)
 block_data = block_data.set_index('end_time')
-st.write(block_data, 'fixed_volume_streaming_data_VWAP_8_20_2018.xlsx','Sheet1')
+st.write(block_data, 'fixed_volume_streaming_data_VWAP_4.xlsx','Sheet1')
 print('block data', block_data)
 
 EXEC_SIZE = 1
@@ -122,4 +160,16 @@ data_next_level = getNextExecutionLevel(data, EXEC_SIZE, 'sell', 'next_buy_level
 data_next_level2 = getNextExecutionLevel(data_next_level, EXEC_SIZE, 'buy', 'next_sell_level')
 print('data next level', data_next_level)
 
-st.write(data_next_level2,'fixed_volume_streaming_data_execpxes_8_20_2018.xlsx','Sheet1')
+st.write(data_next_level2,'fixed_volume_streaming_data_execpxes_4.xlsx','Sheet1')
+'''
+
+
+
+ml_data = pd.read_excel('vwap_backtests/fixed_volume_streaming_data_VWAP_8_20_2018.xlsx',sheetname='ML_INPUT',index_col='time')
+
+dtc_analyzer = DTCAnalyzer(ml_data)
+dtc_analyzer.fitDTC()
+r_2 = dtc_analyzer.getR_2()
+print('r 2', r_2)
+
+dtc_analyzer.showTreeGraph()
