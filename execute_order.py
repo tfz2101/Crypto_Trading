@@ -38,7 +38,7 @@ BTC_ACCT_ID = btc_acc_id_file.readline()
 
 PRODUCT = "ETH-USD"
 TARGET_PRICE = ""
-SIZE = 1
+SIZE = 2
 SIDE = "BUY"
 TIME_LIMIT_SEC = 60*1
 START_TIME = datetime.datetime.now()

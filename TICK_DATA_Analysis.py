@@ -22,12 +22,12 @@ class DTCAnalyzer():
         self.orig_data = data
         self.data = self.orig_data.dropna()
         self.DTC = DTC()
-        self.Y = self.data['Y']
-        self.X = self.data.drop('Y')
-
-    def fitDTC(self):
+        self.Y = self.data['Y'].values
+        self.X = self.data.drop(['Y','num_trades_zscore','skew','time_elapsed_zscore'], axis=1).values
         print('Y', self.Y)
         print('X', self.X)
+
+    def fitDTC(self):
         self.DTC.fit(self.X, self.Y)
 
 
@@ -173,4 +173,4 @@ dtc_analyzer.fitDTC()
 r_2 = dtc_analyzer.getR_2()
 print('r 2', r_2)
 
-print('decision path',dtc_analyzer.getDecisionPath())
+#print('decision path',dtc_analyzer.getDecisionPath())
