@@ -4,9 +4,9 @@ import numpy as np
 
 data = pd.read_excel('vwap_backtests/fixed_volume_streaming_data_VWAP_8_20_2018.xlsx',sheetname='ML_INPUT',index_col='time')
 
-rd = np.array((1, data.shape[0]))
+rd = np.full((1, data.shape[0]),10)
 #rd = np.random.random((1,data.shape[0]))
-print(rd, 'rd np')
+print(rd[0], 'rd np')
 rd = [0] * data.shape[0]
 print('rd list', rd)
 

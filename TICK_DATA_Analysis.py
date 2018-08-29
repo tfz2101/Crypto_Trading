@@ -111,7 +111,8 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     prices = []
     volume = []
     for i in range(0, data.shape[0]):
-        for j in range(i+1, data.shape[0]):
+        #Changed the starting index from i+1 to i - should look at current trade to determine next fill level 
+        for j in range(i, data.shape[0]):
             if sizeLeft <= 0:
                 continue
             else:
