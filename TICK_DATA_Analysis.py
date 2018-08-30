@@ -5,6 +5,8 @@ import datetime as datetime
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
+from ML_Trading import Stat_Fcns as sf
+
 from sklearn.tree import DecisionTreeRegressor as DTC
 
 from sklearn.externals.six import StringIO
@@ -19,8 +21,7 @@ import pydotplus
 class DTCAnalyzer():
     def __init__(self, data, **kwarg):
         #@FORMAT: data = df('Y', signal1, signal2, etc, index=dates)
-        self.orig_data = data
-        self.data = self.orig_data.dropna()
+        self.data = data
         self.DTC = DTC()
         self.Y = self.data['Y'].values
         self.X = self.data.drop(['Y','num_trades_zscore','skew','time_elapsed_zscore'], axis=1).values
@@ -45,13 +46,30 @@ class DTCAnalyzer():
     def getDecisionPath(self):
         return self.DTC.decision_path(self.X)
 
+def getBuySellFlux(data, sample_size, start_index):
+    #@FORMAT: data = df(price, size, side, index=dates)
+    for i in range(start_index, data.shape[0]):
+        buys = {'prices': [], 'sizes': []}
+        sells = {'prices': [], 'sizes': []}
+        for j in range(i-1, 0, -1):
+            if len(buys['prices']) >= sample_size and len(sells['prices']) >= sample_size:
+                break
+            #@TODO: look for upper case 'buys' and 'sell'
+            if data.iloc[i,2] == "buy":
+                buys['prices'].append(data.iloc[i,0])
+                buys['sizes'].append(data.iloc[i, 1])
+            if data.iloc[i,2] == "sell":
+                sells['prices'].append(data.iloc[i,0])
+                sells['sizes'].append(data.iloc[i, 1])
+
+
+
 def sumproduct(list1, list2):
     sum = 0
     for i in range(0, len(list1)):
         sum += list1[i] * list2[i]
 
     return sum
-
 
 #Takes fixed internal price and volume time series and transforms it into a fixed volume time series
 def getFixedVolumeData(orig_data, size):
@@ -111,7 +129,7 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     prices = []
     volume = []
     for i in range(0, data.shape[0]):
-        #Changed the starting index from i+1 to i - should look at current trade to determine next fill level 
+        #Changed the starting index from i+1 to i - should look at current trade to determine next fill level
         for j in range(i, data.shape[0]):
             if sizeLeft <= 0:
                 continue
@@ -169,9 +187,18 @@ st.write(data_next_level2,'fixed_volume_streaming_data_execpxes_4.xlsx','Sheet1'
 
 ml_data = pd.read_excel('vwap_backtests/fixed_volume_streaming_data_VWAP_8_20_2018.xlsx',sheetname='ML_INPUT',index_col='time')
 
-dtc_analyzer = DTCAnalyzer(ml_data)
-dtc_analyzer.fitDTC()
-r_2 = dtc_analyzer.getR_2()
-print('r 2', r_2)
+#dtc_analyzer = DTCAnalyzer(ml_data)
+#dtc_analyzer.fitDTC()
+#r_2 = dtc_analyzer.getR_2()
+#print('r 2', r_2)
 
 #print('decision path',dtc_analyzer.getDecisionPath())
+ml_data = ml_data.dropna()
+print('ml data', ml_data)
+
+test_data =  np.random.random((1000,))
+stat, critical_values, sig_level = sf.adTest(test_data)
+
+print('stat', stat)
+print('critical values', critical_values)
+print('sig level', sig_level)
