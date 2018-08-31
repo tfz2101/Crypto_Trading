@@ -46,23 +46,50 @@ class DTCAnalyzer():
     def getDecisionPath(self):
         return self.DTC.decision_path(self.X)
 
-def getBuySellFlux(data, sample_size, start_index):
-    #@FORMAT: data = df(price, size, side, index=dates)
+def getBuySellFlux(orig_data, sample_size, start_index):
+    #@FORMAT: orig_data = df(price, size, side, index=dates)
+    PRICE_UNIT = .01
+    data = orig_data.copy()
     for i in range(start_index, data.shape[0]):
-        buys = {'prices': [], 'sizes': []}
-        sells = {'prices': [], 'sizes': []}
-        for j in range(i-1, 0, -1):
+        buys = {'deltas': [], 'prices': [], 'sizes': [], 'money': []}
+        sells = {'deltas': [], 'prices': [], 'sizes': [], 'money': []}
+        for j in range(i, 0, -1):
             if len(buys['prices']) >= sample_size and len(sells['prices']) >= sample_size:
                 break
             #@TODO: look for upper case 'buys' and 'sell'
-            if data.iloc[i,2] == "buy":
-                buys['prices'].append(data.iloc[i,0])
-                buys['sizes'].append(data.iloc[i, 1])
-            if data.iloc[i,2] == "sell":
-                sells['prices'].append(data.iloc[i,0])
-                sells['sizes'].append(data.iloc[i, 1])
+            #Only look at consecutive buys and sells so we can ascertain the price impact for current time t
+            #Note we take t-1 values to calculate price impact since it's determined by looking at how much money was required to move price from t-1 to t
+            if data.iloc[j,2] == "buy" and data.iloc[j-1,2] == "buy":
+                buys['deltas'].append(data.iloc[j,0] - data.iloc[j-1,0])
+                #print('delta add', buys['deltas'])
+                buys['prices'].append(data.iloc[j-1, 0])
+                buys['sizes'].append(data.iloc[j-1, 1])
+                buys['money'].append(data.iloc[j-1, 0] * data.iloc[j-1, 1])
+                #print('money', buys['money'])
+            if data.iloc[j,2] == "sell" and data.iloc[j-1,2] == "sell":
+                sells['deltas'].append(-1*(data.iloc[j, 0] - data.iloc[j - 1, 0]))
+                #print('last price', data.iloc[j-1, 0])
+                #print('deltas', float(data.iloc[j, 0]) - float(data.iloc[j - 1, 0]))
+                sells['prices'].append(data.iloc[j-1,0])
+                sells['sizes'].append(data.iloc[j-1, 1])
+                sells['money'].append(data.iloc[j-1, 0] * data.iloc[j-1, 1])
+                #print('money', sells['money'])
 
-
+        #Check that the deltas are nonzero since divide by zero is not allowed
+        try:
+            buy_flux = sum(buys['money'])/(sum(buys['deltas'])/PRICE_UNIT)
+        except ZeroDivisionError:
+            buy_flux = 'unch'
+        try:
+            sell_flux = sum(sells['money']) / (sum(sells['deltas']) / PRICE_UNIT)
+        except ZeroDivisionError:
+            sell_flux = 'unch'
+        print('buys grid', buys)
+        data.ix[i, 'buys_flux'] = buy_flux
+        data.ix[i, 'sells_flux'] = sell_flux
+        print('sells grid', sells)
+    #RETURN: df(price, size, side, buy_flux, sell_flux, index=dates)
+    return data
 
 def sumproduct(list1, list2):
     sum = 0
@@ -184,7 +211,7 @@ st.write(data_next_level2,'fixed_volume_streaming_data_execpxes_4.xlsx','Sheet1'
 '''
 
 
-
+'''
 ml_data = pd.read_excel('vwap_backtests/fixed_volume_streaming_data_VWAP_8_20_2018.xlsx',sheetname='ML_INPUT',index_col='time')
 
 #dtc_analyzer = DTCAnalyzer(ml_data)
@@ -202,3 +229,12 @@ stat, critical_values, sig_level = sf.adTest(test_data)
 print('stat', stat)
 print('critical values', critical_values)
 print('sig level', sig_level)
+'''
+
+
+
+tick_data = pd.read_excel('eth_dataset_07_15_2018_Bull_Market.xlsx', sheetname='refined_data_clean', index_col='time')
+
+flux_data  = getBuySellFlux(tick_data, 30, 200)
+print('flux data', flux_data)
+st.write(flux_data, 'eth_dataset_07_15_2018_Bull_Market_FLUXDATA.xlsx')
