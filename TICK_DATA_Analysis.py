@@ -3,12 +3,13 @@ import pandas as pd
 import sys
 import datetime as datetime
 sys.path.append('../')
-from ML_Trading_2 import ML_functions as mlfcn
-from ML_Trading_2 import Signals_Testing as st
-from ML_Trading_2 import Stat_Fcns as sf
+from ML_Trading import ML_functions as mlfcn
+from ML_Trading import Signals_Testing as st
+from ML_Trading import Stat_Fcns as sf
 
 from sklearn.tree import DecisionTreeRegressor as DTC
 from sklearn.tree import export_graphviz
+from sklearn.ensemble import RandomForestRegressor as RF
 import graphviz
 import pydotplus
 
@@ -41,6 +42,30 @@ class DTCAnalyzer():
 
     def getDecisionPath(self):
         return self.DTC.decision_path(self.X)
+
+#Class for Decision Tree Regressors analysis on datasets
+class RFAnalyzer():
+    def __init__(self, data, **kwarg):
+        #@FORMAT: data = df('Y', signal1, signal2, etc, index=dates)
+        self.data = data
+        self.RF = RF()
+        self.Y = self.data['Y'].values
+        self.X = self.data.drop(['Y','acf_value','acf_pval','df_pval'], axis=1).values
+        print('Y', self.Y)
+        print('X', self.X)
+
+    def fitModel(self):
+        self.RF.fit(self.X, self.Y)
+
+    def getR_2(self):
+        return self.RF.score(self.X, self.Y)
+
+    def getFeatureImportance(self):
+        return self.RF.feature_importances_
+
+    #Returns how many features were actually used in the model fit
+    def getNumFeatures(self):
+        return self.RF.n_features_
 
 def getBuySellFlux(orig_data, sample_size, start_index):
     #@FORMAT: orig_data = df(price, size, side, index=dates)
@@ -209,19 +234,21 @@ st.write(data_next_level2,'fixed_volume_streaming_data_execpxes_4.xlsx','Sheet1'
 '''
 
 
-ml_data = pd.read_excel('vwap_backtests/fixed_volume_streaming_data_VWAP_8_20_2018.xlsx',sheetname='ML_INPUT',index_col='time')
-
+#ml_data = pd.read_excel('vwap_backtests/fixed_volume_streaming_data_VWAP_8_20_2018.xlsx',sheetname='ML_INPUT',index_col='time')
+ml_data = pd.read_excel('r_input.xlsx','sheet2',index_col='Date')
 ml_data = ml_data.dropna()
 print('ml data', ml_data)
 
-dtc_analyzer = DTCAnalyzer(ml_data)
-dtc_analyzer.fitDTC()
-r_2 = dtc_analyzer.getR_2()
-print('r 2', r_2)
+rf_analyzer = RFAnalyzer(data=ml_data)
+rf_analyzer.fitModel()
+feat_imp = rf_analyzer.getFeatureImportance()
+print('feat imp', feat_imp)
 
-dtc_analyzer.showTreeGraph()
+feat_num = rf_analyzer.getNumFeatures()
+print('feat num', feat_num)
 
-
+r_2 = rf_analyzer.getR_2()
+print('r_2', r_2)
 
 
 
