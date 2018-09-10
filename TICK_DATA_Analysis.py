@@ -3,9 +3,9 @@ import pandas as pd
 import sys
 import datetime as datetime
 sys.path.append('../')
-from ML_Trading import ML_functions as mlfcn
-from ML_Trading import Signals_Testing as st
-from ML_Trading import Stat_Fcns as sf
+from ML_Trading_2 import ML_functions as mlfcn
+from ML_Trading_2 import Signals_Testing as st
+from ML_Trading_2 import Stat_Fcns as sf
 
 from sklearn.tree import DecisionTreeRegressor as DTC
 
@@ -182,6 +182,7 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     # RETURN: df([ORIGINAL FEATURES], exec_price, index=dates)
     return data
 
+'''
 data = pd.read_excel('streaming_tick_data4.xlsx', sheetname='refined_data', index_col='time')
 BLOCK_SIZE = 5
 
@@ -192,6 +193,7 @@ for i in range(0, timeindex.shape[0]):
     #print('time index', timeindex[i])
 
 data = data.set_index(timeindex)
+'''
 
 '''
 block_data, full_block_data = getFixedVolumeData(data, BLOCK_SIZE)
@@ -214,14 +216,15 @@ st.write(data_next_level2,'fixed_volume_streaming_data_execpxes_4.xlsx','Sheet1'
 '''
 ml_data = pd.read_excel('vwap_backtests/fixed_volume_streaming_data_VWAP_8_20_2018.xlsx',sheetname='ML_INPUT',index_col='time')
 
-#dtc_analyzer = DTCAnalyzer(ml_data)
-#dtc_analyzer.fitDTC()
-#r_2 = dtc_analyzer.getR_2()
-#print('r 2', r_2)
-
-#print('decision path',dtc_analyzer.getDecisionPath())
 ml_data = ml_data.dropna()
 print('ml data', ml_data)
+
+dtc_analyzer = DTCAnalyzer(ml_data)
+dtc_analyzer.fitDTC()
+r_2 = dtc_analyzer.getR_2()
+print('r 2', r_2)
+
+dtc_analyzer.showTreeGraph()
 
 test_data =  np.random.random((1000,))
 stat, critical_values, sig_level = sf.adTest(test_data)
@@ -232,9 +235,34 @@ print('sig level', sig_level)
 '''
 
 
-
+'''
 tick_data = pd.read_excel('eth_dataset_07_15_2018_Bull_Market.xlsx', sheetname='refined_data_clean', index_col='time')
 
 flux_data  = getBuySellFlux(tick_data, 30, 200)
 print('flux data', flux_data)
 st.write(flux_data, 'eth_dataset_07_15_2018_Bull_Market_FLUXDATA.xlsx')
+'''
+
+'''
+stat_data = pd.read_excel('ETC_Diff_Freq_Momentum.xlsx',sheetname='STATS_INPUT',index_col='Date')
+print(stat_data)
+
+
+rolling_stat_fcns = sf.RollingTraitStatFcns()
+acf_1 = rolling_stat_fcns.acf_fcn_ith_cor(data=stat_data.values, ith=1, lags=2, alpha=.05)
+print('acf', acf_1)
+
+df = rolling_stat_fcns.dickeyfuller_fcn(data= stat_data.values, maxlag=1)
+print('df', df)
+
+stat_fcns = [rolling_stat_fcns.acf_fcn_ith_cor, rolling_stat_fcns.acf_fcn_ith_cor_pval, rolling_stat_fcns.dickeyfuller_fcn]
+traits_data = st.getRollingTraits(stat_data, stat_fcns, gap=30)
+print(traits_data)
+
+st.write(traits_data, 'traits_data.xlsx','sheet1')
+'''
+
+data = pd.read_excel('ETC_Diff_Freq_Momentum.xlsx',sheetname='R_INPUT',index_col='Date')
+
+data = data.dropna()
+st.write(data, 'r_input.xlsx','sheet1')
