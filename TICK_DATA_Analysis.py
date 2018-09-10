@@ -8,13 +8,9 @@ from ML_Trading_2 import Signals_Testing as st
 from ML_Trading_2 import Stat_Fcns as sf
 
 from sklearn.tree import DecisionTreeRegressor as DTC
-
-from sklearn.externals.six import StringIO
-from IPython.display import Image
 from sklearn.tree import export_graphviz
+import graphviz
 import pydotplus
-
-
 
 
 #Class for Decision Tree Regressors analysis on datasets
@@ -36,12 +32,12 @@ class DTCAnalyzer():
         return self.DTC.score(self.X, self.Y)
 
     def showTreeGraph(self):
-        dot_data = StringIO()
-        export_graphviz(self.DTC, out_file=dot_data,
-                        filled=True, rounded=True,
-                        special_characters=True)
-        graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
-        Image(graph.create_png())
+        dot_data = export_graphviz(self.DTC, out_file='tree_chart.bmp')
+        graph = pydotplus.graph_from_dot_data(dot_data)
+        graph.write_png('tree.png')
+
+        #graph = graphviz.Source(dot_data)
+        #graph.render("tree_chart")
 
     def getDecisionPath(self):
         return self.DTC.decision_path(self.X)
@@ -213,7 +209,6 @@ st.write(data_next_level2,'fixed_volume_streaming_data_execpxes_4.xlsx','Sheet1'
 '''
 
 
-'''
 ml_data = pd.read_excel('vwap_backtests/fixed_volume_streaming_data_VWAP_8_20_2018.xlsx',sheetname='ML_INPUT',index_col='time')
 
 ml_data = ml_data.dropna()
@@ -226,13 +221,9 @@ print('r 2', r_2)
 
 dtc_analyzer.showTreeGraph()
 
-test_data =  np.random.random((1000,))
-stat, critical_values, sig_level = sf.adTest(test_data)
 
-print('stat', stat)
-print('critical values', critical_values)
-print('sig level', sig_level)
-'''
+
+
 
 
 '''
@@ -262,7 +253,3 @@ print(traits_data)
 st.write(traits_data, 'traits_data.xlsx','sheet1')
 '''
 
-data = pd.read_excel('ETC_Diff_Freq_Momentum.xlsx',sheetname='R_INPUT',index_col='Date')
-
-data = data.dropna()
-st.write(data, 'r_input.xlsx','sheet1')
