@@ -280,3 +280,9 @@ print(traits_data)
 st.write(traits_data, 'traits_data.xlsx','sheet1')
 '''
 
+
+r_data = pd.read_excel('ETC_Diff_Freq_Momentum.xlsx','R_INPUT',index_col='Date')
+r_data = r_data.dropna()
+print('r_data', r_data)
+st.write(r_data, 'R_Scripts/signals.xlsx','sheet1')
+
