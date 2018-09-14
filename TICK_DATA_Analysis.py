@@ -288,8 +288,12 @@ st.write(r_data, 'R_Scripts/signals.xlsx','sheet1')
 '''
 
 
-ts = range(0,100)
+#ts = range(0,100)
 
-stat_fcns = sf.RollingTraitStatFcns()
-hs = stat_fcns.hurstExp(ts)
-print('hs', hs)
+#stat_fcns = sf.RollingTraitStatFcns()
+#hs = stat_fcns.hurstExp(ts)
+#print('hs', hs)
+
+data = pd.read_excel('ETH_5MIN.xlsx','Sheet1',index_col='Dates')
+data =  data.dropna()
+st.write(data, 'ETH_5MIN_CLEAN.xlsx', 'sheet1')
