@@ -1,8 +1,8 @@
 DecisionTreePlot <- function() {
   library(rpart)
   library(rpart.plot)
-  ml_data <- read.csv("C:/Users/fzhi/PycharmProjects/Crytpo_Trading/R_Scripts/signals_positives_extremes.csv")
-  model <- rpart(Y_60 ~ acf_value + skew + kurtosis, data = ml_data, control=rpart.control(cp=0.01))
+  ml_data <- read.csv("C:/Users/Frank Zhi/PycharmProjects/Crypto_Trading/R_Scripts/r_traits_may_aug.csv")
+  model <- rpart(Y_10 ~ Z_score	+ min5_ZSCORE + min15_ZSCORE + acf_corr	+ hurst +	df_pval +	skew +	kurtosis	+ MA_Volume_5_30_Z_SCORE, data = ml_data, control=rpart.control(cp=0.003))
   #Dates gets stored as variable X, so the dependent factors need to be named. 
   pred = predict(model, ml_data)
   rpart.plot(model)

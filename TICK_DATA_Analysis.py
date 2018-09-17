@@ -10,7 +10,6 @@ from ML_Trading import Stat_Fcns as sf
 from sklearn.tree import DecisionTreeRegressor as DTC
 from sklearn.tree import export_graphviz
 from sklearn.ensemble import RandomForestRegressor as RF
-import graphviz
 import pydotplus
 
 
@@ -86,15 +85,12 @@ def getBuySellFlux(orig_data, sample_size, start_index):
                 buys['prices'].append(data.iloc[j-1, 0])
                 buys['sizes'].append(data.iloc[j-1, 1])
                 buys['money'].append(data.iloc[j-1, 0] * data.iloc[j-1, 1])
-                #print('money', buys['money'])
             if data.iloc[j,2] == "sell" and data.iloc[j-1,2] == "sell":
                 sells['deltas'].append(-1*(data.iloc[j, 0] - data.iloc[j - 1, 0]))
-                #print('last price', data.iloc[j-1, 0])
-                #print('deltas', float(data.iloc[j, 0]) - float(data.iloc[j - 1, 0]))
                 sells['prices'].append(data.iloc[j-1,0])
                 sells['sizes'].append(data.iloc[j-1, 1])
                 sells['money'].append(data.iloc[j-1, 0] * data.iloc[j-1, 1])
-                #print('money', sells['money'])
+
 
         #Check that the deltas are nonzero since divide by zero is not allowed
         try:
@@ -177,6 +173,7 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     prices = []
     volume = []
     for i in range(0, data.shape[0]):
+        print('date',data.index.values[i])
         #Changed the starting index from i+1 to i - should look at current trade to determine next fill level
         for j in range(i, data.shape[0]):
             if sizeLeft <= 0:
@@ -187,9 +184,9 @@ def getNextExecutionLevel(orig_data, size, side, colName):
                     sizeToDo = min(sizeLeft, data.iloc[j, 1])
                     volume.append(sizeToDo)
                     sizeLeft -= sizeToDo
-        print('volumes',volume)
-        print('prices', prices)
-        print('sizeLeft', sizeLeft)
+        #print('volumes',volume)
+        #print('prices', prices)
+        #print('sizeLeft', sizeLeft)
         if sizeLeft <= 0:
             exec_price = sumproduct(prices, volume)/ sum(volume)
             print('exec price', exec_price)
@@ -203,10 +200,10 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     # RETURN: df([ORIGINAL FEATURES], exec_price, index=dates)
     return data
 
-'''
-data = pd.read_excel('streaming_tick_data4.xlsx', sheetname='refined_data', index_col='time')
-BLOCK_SIZE = 5
 
+data = pd.read_excel('eth_dataset_7_26_7_28.xlsx','Sheet1',index_col='date')
+BLOCK_SIZE = 5
+'''
 #Convert unicode time index to datetime index
 timeindex =  data.index.values
 for i in range(0, timeindex.shape[0]):
@@ -214,26 +211,31 @@ for i in range(0, timeindex.shape[0]):
     #print('time index', timeindex[i])
 
 data = data.set_index(timeindex)
-'''
 
+st.write(data, 'eth_dataset_7_26_7_28_datesindex.xlsx','sheet1')
 '''
-block_data, full_block_data = getFixedVolumeData(data, BLOCK_SIZE)
-#col_name = ['time', 'price', 'size', 'side', 'end_time', 'VWAP', 'num_trades']
+'''
+#GET FIXED VOLUME DATA
+block_data, full_block_data = getFixedVolumeData(data, BLOCK_SIZE)#col_name = ['time', 'price', 'size', 'side', 'end_time', 'VWAP', 'num_trades']
 col_name = ['end_time','vwap', 'num_trades']
 block_data = pd.DataFrame(block_data, columns=col_name)
 block_data = block_data.set_index('end_time')
-st.write(block_data, 'fixed_volume_streaming_data_VWAP_4.xlsx','Sheet1')
+st.write(block_data, 'fixed_volume_streaming_data_VWAP_7_27_7_28.xlsx','Sheet1')
 print('block data', block_data)
-
-EXEC_SIZE = 1
-data_next_level = getNextExecutionLevel(data, EXEC_SIZE, 'sell', 'next_buy_level')
-data_next_level2 = getNextExecutionLevel(data_next_level, EXEC_SIZE, 'buy', 'next_sell_level')
-print('data next level', data_next_level)
-
-st.write(data_next_level2,'fixed_volume_streaming_data_execpxes_4.xlsx','Sheet1')
 '''
 
 
+#GET EXECUTION LEVELS FOR TICK DATA
+EXEC_SIZE = 1
+data_next_level = getNextExecutionLevel(data, EXEC_SIZE, 'SELL', 'next_buy_level')
+data_next_level2 = getNextExecutionLevel(data_next_level, EXEC_SIZE, 'BUY', 'next_sell_level')
+print('data next level', data_next_level)
+
+st.write(data_next_level2,'fixed_volume_streaming_data_execpxes_7_27_7_28.xlsx','Sheet1')
+
+
+'''
+#RUN A DECISION TREE OR RANDOM FOREST ON DATA
 #ml_data = pd.read_excel('vwap_backtests/fixed_volume_streaming_data_VWAP_8_20_2018.xlsx',sheetname='ML_INPUT',index_col='time')
 ml_data = pd.read_excel('r_input.xlsx','sheet2',index_col='Date')
 ml_data = ml_data.dropna()
@@ -249,11 +251,12 @@ print('feat num', feat_num)
 
 r_2 = rf_analyzer.getR_2()
 print('r_2', r_2)
-
+'''
 
 
 
 '''
+#FOR TICK DATA, CALCULATE DAMPENNESS OF TRADES TO SEE IF THE BID SIDE OR OFFER SIDE CAN ABSORB MORE 
 tick_data = pd.read_excel('eth_dataset_07_15_2018_Bull_Market.xlsx', sheetname='refined_data_clean', index_col='time')
 
 flux_data  = getBuySellFlux(tick_data, 30, 200)
@@ -262,7 +265,8 @@ st.write(flux_data, 'eth_dataset_07_15_2018_Bull_Market_FLUXDATA.xlsx')
 '''
 
 '''
-stat_data = pd.read_excel('ETC_Diff_Freq_Momentum.xlsx',sheetname='STATS_INPUT',index_col='Date')
+#RETURNS STATISTICAL TRAITS OF TIME SERIES
+stat_data = pd.read_excel('ETH_May_To_August_Price_Series.xlsx',sheetname='Sheet1',index_col='Dates')
 print(stat_data)
 
 
@@ -273,11 +277,11 @@ print('acf', acf_1)
 df = rolling_stat_fcns.dickeyfuller_fcn(data= stat_data.values, maxlag=1)
 print('df', df)
 
-stat_fcns = [rolling_stat_fcns.acf_fcn_ith_cor, rolling_stat_fcns.acf_fcn_ith_cor_pval, rolling_stat_fcns.dickeyfuller_fcn]
+stat_fcns = [rolling_stat_fcns.acf_fcn_ith_cor, rolling_stat_fcns.dickeyfuller_fcn, rolling_stat_fcns.hurstExp]
 traits_data = st.getRollingTraits(stat_data, stat_fcns, gap=30)
 print(traits_data)
 
-st.write(traits_data, 'traits_data.xlsx','sheet1')
+st.write(traits_data, 'traits_data_may_august.xlsx','sheet1')
 '''
 
 '''
@@ -288,12 +292,10 @@ st.write(r_data, 'R_Scripts/signals.xlsx','sheet1')
 '''
 
 
-#ts = range(0,100)
 
-#stat_fcns = sf.RollingTraitStatFcns()
-#hs = stat_fcns.hurstExp(ts)
-#print('hs', hs)
-
+'''
+#CLEANS OUT NA FOR R DATASET
 data = pd.read_excel('ETH_5MIN.xlsx','Sheet1',index_col='Dates')
 data =  data.dropna()
 st.write(data, 'ETH_5MIN_CLEAN.xlsx', 'sheet1')
+'''
