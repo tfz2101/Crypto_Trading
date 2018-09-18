@@ -201,18 +201,22 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     return data
 
 
-data = pd.read_excel('eth_dataset_07_10_07_8_18.xlsx','Sheet1',index_col='date')
+data = pd.read_excel('eth_dataset_7_15_7_18_datesindex.xlsx','sheet1',index_col='date')
 BLOCK_SIZE = 5
 
+'''
 #Convert unicode time index to datetime index
-timeindex =  data.index.values
-for i in range(0, timeindex.shape[0]):
-    timeindex[i] = datetime.datetime.strptime(timeindex[i], '%Y-%m-%dT%H:%M:%S.%f')
-    #print('time index', timeindex[i])
+def getTimeIndex(data):
+    timeindex =  data.index.values
+    for i in range(0, timeindex.shape[0]):
+        timeindex[i] = datetime.datetime.strptime(timeindex[i], '%Y-%m-%dT%H:%M:%S.%f')
+        #print('time index', timeindex[i])
+    data = data.set_index(timeindex)
+    return data
 
-data = data.set_index(timeindex)
-
-#st.write(data, 'eth_dataset_7_26_7_28_datesindex.xlsx','sheet1')
+data = getTimeIndex(data)
+st.write(data, 'eth_dataset_7_15_7_18_datesindex.xlsx','sheet1')
+'''
 
 
 #GET FIXED VOLUME DATA
@@ -220,7 +224,7 @@ block_data, full_block_data = getFixedVolumeData(data, BLOCK_SIZE)#col_name = ['
 col_name = ['end_time','vwap', 'num_trades']
 block_data = pd.DataFrame(block_data, columns=col_name)
 block_data = block_data.set_index('end_time')
-st.write(block_data, 'fixed_volume_streaming_data_VWAP_7_10_7_18_raw_data.xlsx','Sheet1')
+st.write(block_data, 'fixed_volume_streaming_data_VWAP_7_15_7_18_raw_data.xlsx','Sheet1')
 print('block data', block_data)
 
 
