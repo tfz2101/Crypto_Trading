@@ -2,6 +2,7 @@ from websocket import create_connection
 import json, time, ast
 import pandas as pd
 import sys
+import datetime
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
@@ -41,18 +42,6 @@ def getFixedVolumeData(orig_data, size):
                 curBlock['time'].append(data.index.values[i])
                 curBlock['sizeLeft'] = curBlock['sizeLeft'] - data.iloc[i,1]
                 data.iloc[i,1] = 0
-
-        #attach original data to a block point that coincides or precedes it
-        if len(out) <= 0:
-            fullout.append([orig_data.index.values[i], orig_data.iloc[i, 0], orig_data.iloc[i, 1]])
-        elif orig_data.index.values[i] <= out[len(out)-1][0]:
-            row = [orig_data.index.values[i], orig_data.iloc[i,0], orig_data.iloc[i,1], orig_data.iloc[i,2]] + out[len(out)-1]
-            print('row', type(orig_data.index.values[i]))
-            fullout.append(row)
-        elif orig_data.index.values[i] < out[len(out)-1][0]:
-            row = [orig_data.index.values[i], orig_data.iloc[i,0], orig_data.iloc[i,1]] + [''] * len(out)
-            print('row', type(orig_data.index.values[i]))
-            fullout.append(row)
 
     #RETURN: [end_time, VWAP, num_trades], [time, price, size, side, end_time, VWAP, num_trades]
     return out, fullout
@@ -100,23 +89,56 @@ ws.send(json.dumps(message))
 def toUnicode(string):
     return unicode(string, "utf-8")
 
-resultList = []
+bars = []
 SIZE = 5
-curBlock = {'time': [], 'sizeLeft': SIZE, 'prices': [], 'sizes': []}
+curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
 for i in range(0,10):
     result = ws.recv()
 
+    #Converts json to dict
+    result = json.loads(result)
+    print('result', result)
+
     try:
-        #Converts json to dict
-        result = json.loads(result)
-        print('result', result)
         px =  float(result['price'])
         size = float(result['last_size'])
         side = str(result['side'])
         time = result['time']
+        time = datetime.datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%f000Z')
+
         print('px', px)
         print('side', side)
-        resultList.append(result)
+        print('time', time)
+        print('size', size)
+
+        if size >= curBlock['sizeLeft']:
+            size_leftover = 1000
+            while size_leftover > 0:
+                size_leftover = size - curBlock['sizeLeft']
+                curBlock['sizes'].append(curBlock['sizeLeft'])
+                curBlock['prices'].append(px)
+
+                #Calc completed block
+                print('current blockness', curBlock)
+                vwap_lst = [size * px for size, px in zip(curBlock['prices'], curBlock['sizes'])]
+                vwap = float(vwap_lst[0])/sum(curBlock['sizes'])
+                print('vwap', vwap)
+                num_trades = len(curBlock['sizes'])
+                bar = [time, vwap, num_trades]
+                bars.append(bar)
+
+                #Create new block
+                curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
+            #We know size_leftover is not bigger than SIZE from above loop.
+            if size_leftover > 0:
+                curBlock['sizes'].append(curBlock['sizeLeft'])
+                curBlock['prices'].append(px)
+        if size < curBlock['sizeLeft']:
+            curBlock['prices'].append(px)
+            curBlock['sizes'].append(size)
+            curBlock['sizeLeft'] -= size
+
+        print('curblock', curBlock)
     except:
         continue
 
