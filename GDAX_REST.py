@@ -95,9 +95,9 @@ curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
 transactions = []
 
 #testingg
-test_t =  pd.read_excel('transactions.xlsx', 'sheet1')
+#test_t =  pd.read_excel('transactions.xlsx', 'sheet1')
 
-for i in range(0,19):
+for i in range(0,40):
     result = ws.recv()
 
     #Converts json to dict
@@ -105,25 +105,27 @@ for i in range(0,19):
     print('result', result)
 
     try:
-        #testing - comment below
-        '''
         px =  float(result['price'])
         size = float(result['last_size'])
         side = str(result['side'])
         time = result['time']
         time = datetime.datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%f000Z')
-        '''
 
+        '''
         # testing
         px = test_t.ix[i, 'px']
         size = test_t.ix[i, 'size']
         side = test_t.ix[i, 'side']
         time = test_t.ix[i, 'time']
-
+        '''
 
         transactions.append([time, px, size, side])
 
-
+        if size < curBlock['sizeLeft']:
+            curBlock['prices'].append(px)
+            curBlock['sizes'].append(size)
+            curBlock['sizeLeft'] -= size
+            continue
 
         if size >= curBlock['sizeLeft']:
             size_leftover = size
@@ -149,10 +151,7 @@ for i in range(0,19):
                 curBlock['sizes'].append(size_leftover)
                 curBlock['sizeLeft'] -= size_leftover
                 curBlock['prices'].append(px)
-        if size < curBlock['sizeLeft']:
-            curBlock['prices'].append(px)
-            curBlock['sizes'].append(size)
-            curBlock['sizeLeft'] -= size
+                print('size leftover bigger than 0, cur block', curBlock)
 
         print('curblock', curBlock)
     except:
@@ -160,7 +159,7 @@ for i in range(0,19):
 
 transactions = pd.DataFrame(transactions, columns=['time','px','size','side'])
 #testing - uncomment below line
-#st.write(transactions, 'transactions.xlsx', 'sheet1')
+st.write(transactions, 'transactions.xlsx', 'sheet1')
 bars = pd.DataFrame(bars)
 st.write(bars, 'bars.xlsx','sheet1')
 

@@ -13,5 +13,9 @@ print('rd list', rd)
 rd_series = pd.Series(rd, index=data.index.values)
 print(rd_series)
 
+x = [[1,3,4],[5,6,7],[8,9,10]]
+
+slice = x[0][:]
+print('slice', slice)
 
 

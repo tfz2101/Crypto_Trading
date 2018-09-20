@@ -8,8 +8,6 @@ from Execution_Algorithms import *
 from Signal_Algorithms import *
 from pytz import timezone
 import sys
-from coinmarketcap import Market
-
 
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
@@ -34,19 +32,9 @@ with open(API_FILE) as f:
     lines = [line.rstrip('\n') for line in open(API_FILE)]
 
 
-
 auth_client = gdax.AuthenticatedClient(lines[1],lines[2],lines[0],api_url=AUTH_CLIENT)
 public_client = PUBLIC_CLIENT
 
-
-'''
-CAPITAL = 50.0
-coinmktcap = Market()
-ethmkt = coinmktcap.ticker('Ethereum',limit=1,convert='USD')
-eth_slow_px = float(ethmkt[0]['price_usd'])
-BUY_SIZE = round(CAPITAL/eth_slow_px,2)
-print('BUY SIZE',BUY_SIZE)
-'''
 
 BUY_SIZE = 0.001
 
