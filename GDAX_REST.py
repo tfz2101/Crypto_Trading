@@ -93,7 +93,11 @@ bars = []
 SIZE = 5
 curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
 transactions = []
-for i in range(0,20):
+
+#testingg
+test_t =  pd.read_excel('transactions.xlsx', 'sheet1')
+
+for i in range(0,19):
     result = ws.recv()
 
     #Converts json to dict
@@ -101,21 +105,31 @@ for i in range(0,20):
     print('result', result)
 
     try:
+        #testing - comment below
+        '''
         px =  float(result['price'])
         size = float(result['last_size'])
         side = str(result['side'])
         time = result['time']
         time = datetime.datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%f000Z')
+        '''
 
-        print('px', px)
-        print('side', side)
-        print('time', time)
-        print('size', size)
+        # testing
+        px = test_t.ix[i, 'px']
+        size = test_t.ix[i, 'size']
+        side = test_t.ix[i, 'side']
+        time = test_t.ix[i, 'time']
+
+
         transactions.append([time, px, size, side])
+
+
+
         if size >= curBlock['sizeLeft']:
-            size_leftover = 1000
-            while size_leftover > 0:
-                size_leftover = size - curBlock['sizeLeft']
+            size_leftover = size
+            while size_leftover - curBlock['sizeLeft'] > 0:
+                size_leftover = size_leftover - curBlock['sizeLeft']
+                print('size lefover', size_leftover)
                 curBlock['sizes'].append(curBlock['sizeLeft'])
                 curBlock['prices'].append(px)
 
@@ -133,6 +147,7 @@ for i in range(0,20):
             #We know size_leftover is not bigger than SIZE from above loop.
             if size_leftover > 0:
                 curBlock['sizes'].append(size_leftover)
+                curBlock['sizeLeft'] -= size_leftover
                 curBlock['prices'].append(px)
         if size < curBlock['sizeLeft']:
             curBlock['prices'].append(px)
@@ -144,7 +159,8 @@ for i in range(0,20):
         continue
 
 transactions = pd.DataFrame(transactions, columns=['time','px','size','side'])
-st.write(transactions, 'transactions.xlsx', 'sheet1')
+#testing - uncomment below line
+#st.write(transactions, 'transactions.xlsx', 'sheet1')
 bars = pd.DataFrame(bars)
 st.write(bars, 'bars.xlsx','sheet1')
 

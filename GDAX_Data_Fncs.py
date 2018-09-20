@@ -30,6 +30,18 @@ def getHistoricalData(public_client,symbol='ETH-USD',start='2018-01-23T16:25:00.
     #RETURNS historical data dataframe, sorted where the latest datapoint is in the last row
     return hist_data
 
+#Faster version of original function that uses no dataframes
+def getHistoricalDataFast(public_client,symbol='ETH-USD',start='2018-01-23T16:25:00.00000Z',end='NOTHING',granularity=60):
+    if end == 'NOTHING':
+        hist_data = public_client.get_product_historic_rates(symbol,start=start,granularity=granularity)
+    else:
+        hist_data = public_client.get_product_historic_rates(symbol, start=start, end=end,granularity=granularity)
+
+    cols = {'time': 0, 'low': 1, 'high': 2, 'open': 3, 'close': 4, 'volume': 5}
+    hist_data = sorted(hist_data, key=lambda row: row[0])  # sort by age
+
+    #RETURNS historical data dataframe, sorted where the latest datapoint is in the last row
+    return hist_data
 
 
 public_client = gdax.PublicClient()
@@ -37,21 +49,49 @@ public_client = gdax.PublicClient()
 gdax_zone = 'Atlantic/Azores'
 gdax_time = datetime.datetime.now(timezone(gdax_zone))
 
+
+#1 min intervals
 END = gdax_time
-delta  = 300 * 100
+freq = 60 #in seconds
+delta  = freq * 35
 lookback = datetime.timedelta(seconds=delta)
 START = END - lookback
-
-#@TODO: FIX DATE TIME CONVERSION - IT'S NOT FEEDING BACK TO THE HISTORICAL DATA CORRECTLY!!!!!
 
 print('START',START)
 print('END',END)
 
-dataDF = getHistoricalData(public_client,start=START,end=END,granularity=300)
-#dataDF = dataDF.sort_values(['time'],ascending=True)
-#dataDF = dataDF.reset_index(drop=True)
-orig_hist_data = dataDF
-print(dataDF)
+dataDF = getHistoricalDataFast(public_client,start=START,end=END,granularity=freq)
+orig_hist_data = pd.DataFrame(dataDF, columns=['time','low','high','open','close','volume'])
+print(orig_hist_data)
+
+#5 min intervals
+END = gdax_time
+freq = 300 #in seconds
+delta  = freq * 35
+lookback = datetime.timedelta(seconds=delta)
+START = END - lookback
+
+print('START',START)
+print('END',END)
+
+dataDF = getHistoricalDataFast(public_client,start=START,end=END,granularity=freq)
+orig_hist_data = pd.DataFrame(dataDF, columns=['time','low','high','open','close','volume'])
+print(orig_hist_data)
+
+
+#15 min intervals
+END = gdax_time
+freq = 900 #in seconds
+delta  = freq * 35
+lookback = datetime.timedelta(seconds=delta)
+START = END - lookback
+
+print('START',START)
+print('END',END)
+
+dataDF = getHistoricalDataFast(public_client,start=START,end=END,granularity=freq)
+orig_hist_data = pd.DataFrame(dataDF, columns=['time','low','high','open','close','volume'])
+print(orig_hist_data)
 
 
 #WRITE A LONG HISTORY FOR BACKTESTING
