@@ -92,7 +92,8 @@ def toUnicode(string):
 bars = []
 SIZE = 5
 curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
-for i in range(0,10):
+transactions = []
+for i in range(0,20):
     result = ws.recv()
 
     #Converts json to dict
@@ -110,7 +111,7 @@ for i in range(0,10):
         print('side', side)
         print('time', time)
         print('size', size)
-
+        transactions.append([time, px, size, side])
         if size >= curBlock['sizeLeft']:
             size_leftover = 1000
             while size_leftover > 0:
@@ -120,8 +121,8 @@ for i in range(0,10):
 
                 #Calc completed block
                 print('current blockness', curBlock)
-                vwap_lst = [size * px for size, px in zip(curBlock['prices'], curBlock['sizes'])]
-                vwap = float(vwap_lst[0])/sum(curBlock['sizes'])
+                vwap_lst = [size * px for px,size in zip(curBlock['prices'], curBlock['sizes'])]
+                vwap = float(sum(vwap_lst))/sum(curBlock['sizes'])
                 print('vwap', vwap)
                 num_trades = len(curBlock['sizes'])
                 bar = [time, vwap, num_trades]
@@ -131,7 +132,7 @@ for i in range(0,10):
                 curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
             #We know size_leftover is not bigger than SIZE from above loop.
             if size_leftover > 0:
-                curBlock['sizes'].append(curBlock['sizeLeft'])
+                curBlock['sizes'].append(size_leftover)
                 curBlock['prices'].append(px)
         if size < curBlock['sizeLeft']:
             curBlock['prices'].append(px)
@@ -141,6 +142,11 @@ for i in range(0,10):
         print('curblock', curBlock)
     except:
         continue
+
+transactions = pd.DataFrame(transactions, columns=['time','px','size','side'])
+st.write(transactions, 'transactions.xlsx', 'sheet1')
+bars = pd.DataFrame(bars)
+st.write(bars, 'bars.xlsx','sheet1')
 
 def getTickerChannelData(listData):
     #EXPECTS A LIST OF DICTIONARIES
