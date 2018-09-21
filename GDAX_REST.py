@@ -6,45 +6,8 @@ import datetime
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
+import pickle
 
-
-
-def getFixedVolumeData(orig_data, size):
-    #@FORMAT: orig_data = df(price, volume, side, index=dates)
-    out = []
-    fullout = []
-    data =  orig_data.copy()
-    curBlock ={'time': [], 'sizeLeft': size, 'prices': [], 'sizes': []}
-
-    for i in range(0,data.shape[0]):
-
-        while data.iloc[i,1] > 0.0:
-            if curBlock['sizeLeft'] < data.iloc[i,1]:
-                data.iloc[i,1] = data.iloc[i,1] - curBlock['sizeLeft']
-                curBlock['sizes'].append(curBlock['sizeLeft'])
-                curBlock['prices'].append(data.iloc[i,0])
-                curBlock['time'].append(data.index.values[i])
-                end_time = curBlock['time'][-1]
-                try:
-                   vwap = sumproduct(curBlock['prices'], curBlock['sizes'])/sum(curBlock['sizes'])
-                   print('vwap', vwap)
-                except:
-                    print('curblock prices',curBlock['prices'])
-                    print('curblock sizes',curBlock['sizes'])
-                    vwap = 0
-                num_trades = len(curBlock['prices'])
-                out.append([end_time, vwap, num_trades])
-                curBlock = {'time': [], 'sizeLeft': size, 'prices': [], 'sizes': []}
-
-            elif curBlock['sizeLeft'] >= data.iloc[i,1]:
-                curBlock['sizes'].append(data.iloc[i,1])
-                curBlock['prices'].append(data.iloc[i,0])
-                curBlock['time'].append(data.index.values[i])
-                curBlock['sizeLeft'] = curBlock['sizeLeft'] - data.iloc[i,1]
-                data.iloc[i,1] = 0
-
-    #RETURN: [end_time, VWAP, num_trades], [time, price, size, side, end_time, VWAP, num_trades]
-    return out, fullout
 
 
 # Create connection
@@ -91,11 +54,10 @@ def toUnicode(string):
 
 bars = []
 SIZE = 5
+LEDGE_LIMIT = 61
 curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
 transactions = []
-
-#testingg
-#test_t =  pd.read_excel('transactions.xlsx', 'sheet1')
+block_counter = 0
 
 for i in range(0,40):
     result = ws.recv()
@@ -111,14 +73,6 @@ for i in range(0,40):
         time = result['time']
         time = datetime.datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%f000Z')
 
-        '''
-        # testing
-        px = test_t.ix[i, 'px']
-        size = test_t.ix[i, 'size']
-        side = test_t.ix[i, 'side']
-        time = test_t.ix[i, 'time']
-        '''
-
         transactions.append([time, px, size, side])
 
         if size < curBlock['sizeLeft']:
@@ -131,18 +85,25 @@ for i in range(0,40):
             size_leftover = size
             while size_leftover - curBlock['sizeLeft'] > 0:
                 size_leftover = size_leftover - curBlock['sizeLeft']
-                print('size lefover', size_leftover)
+                #print('size lefover', size_leftover)
                 curBlock['sizes'].append(curBlock['sizeLeft'])
                 curBlock['prices'].append(px)
 
                 #Calc completed block
-                print('current blockness', curBlock)
+                #print('current blockness', curBlock)
                 vwap_lst = [size * px for px,size in zip(curBlock['prices'], curBlock['sizes'])]
                 vwap = float(sum(vwap_lst))/sum(curBlock['sizes'])
-                print('vwap', vwap)
                 num_trades = len(curBlock['sizes'])
                 bar = [time, vwap, num_trades]
-                bars.append(bar)
+                if len(bars) >= LEDGE_LIMIT:
+                    del bars[0]
+                    bars.append(bar)
+                else:
+                    bars.append(bar)
+
+                pickle_bar = open('tick_block_history.pickle', 'wb')
+                pickle.dump(bar, pickle_bar)
+                pickle_bar.close()
 
                 #Create new block
                 curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
@@ -151,17 +112,21 @@ for i in range(0,40):
                 curBlock['sizes'].append(size_leftover)
                 curBlock['sizeLeft'] -= size_leftover
                 curBlock['prices'].append(px)
-                print('size leftover bigger than 0, cur block', curBlock)
+                #print('size leftover bigger than 0, cur block', curBlock)
 
         print('curblock', curBlock)
     except:
         continue
 
+
 transactions = pd.DataFrame(transactions, columns=['time','px','size','side'])
-#testing - uncomment below line
+
 st.write(transactions, 'transactions.xlsx', 'sheet1')
 bars = pd.DataFrame(bars)
 st.write(bars, 'bars.xlsx','sheet1')
+
+
+
 
 def getTickerChannelData(listData):
     #EXPECTS A LIST OF DICTIONARIES
