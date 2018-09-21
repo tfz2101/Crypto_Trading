@@ -5,7 +5,7 @@ import sys
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
-
+import pickle
 
 
 # Create connection
@@ -14,10 +14,11 @@ ws = create_connection("wss://ws-feed.gdax.com")
 # Create subscription message
 message = {
     "type": "subscribe",
-    "channels": [{"name": "ticker", "product_ids": ["BTC-USD"]}]
+    "channels": [{"name": "ticker", "product_ids": ["ETH-USD"]}]
 }
 
-
+#Level 2 Message
+'''
 message = {
     "type": "subscribe",
     "product_ids": [
@@ -40,6 +41,7 @@ message = {
         }
     ]
 }
+'''
 
 # Send subscribe Message
 ws.send(json.dumps(message))
@@ -77,7 +79,10 @@ def getTickerChannelData(listData):
     return pd.DataFrame(data,columns=['time','price','side','last_size','best_bid','best_ask','trade_id'])
 
 data = getTickerChannelData(resultList)
-#st.write(data,'streaming_tick_data7.xlsx','sheet1')
+pickle_in = open('streaming_data.pickle','wb')
+pickle.dump(data, pickle_in)
+pickle_in.close()
+st.write(data,'streaming_tick_data_9_20_2018.xlsx','sheet1')
 
 '''
 with open('../btc_usd.json', 'w') as fp:
