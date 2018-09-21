@@ -8,6 +8,7 @@ from Execution_Algorithms import *
 from Signal_Algorithms import *
 from pytz import timezone
 import sys
+import pickle
 
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
@@ -36,24 +37,47 @@ auth_client = gdax.AuthenticatedClient(lines[1],lines[2],lines[0],api_url=AUTH_C
 public_client = PUBLIC_CLIENT
 
 
-BUY_SIZE = 0.001
-
-PRODUCT = 'BTC-USD'
-MAX_POSITION = 0.003
-EXIT_NOW = False
-GDAX_ZONE = 'Atlantic/Azores'
-
 eth_acc_id_file  = open('../eth_acct_id.txt','r')
 ETH_ACCT_ID = eth_acc_id_file.readline()
 btc_acc_id_file  = open('../btc_acct_id.txt','r')
 BTC_ACCT_ID = btc_acc_id_file.readline()
 
+
+BUY_SIZE = 0.001
+PRODUCT = 'ETH-USD'
+MAX_POSITION = 0.003
+EXIT_NOW = False
+GDAX_ZONE = 'Atlantic/Azores'
+
+
+
 start_time =  datetime.datetime.now()
 run_time_sec = 60 * 60 * 9
 end_time = start_time + datetime.timedelta(seconds=run_time_sec)
 
+
+#Read Updated Tick Block Data
+pickle_in = open('test.tick_block_history.pickle', 'rb')
+data = pickle.load(pickle_in)
+print('data', data)
+
+#Recalcs Signals with updated Tick Block Data
+
+
+#Execute or Not Execute
+
+
+
+#Every 10 seconds, pull in refreshed Historical Data
+
+
+
+
+
 #Empty order manager
-pos_man = PositionManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, product_acct_id=BTC_ACCT_ID)
+pos_man = PositionManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, product_acct_id=ETH_ACCT_ID)
+
+
 while datetime.datetime.now() < end_time:
     if pos_man.getCurrentPositionFromAcct() <= 0.0:
         #GENERATE SIGNAL--------------------------------------------------------------------------------------------------------------------------
@@ -99,19 +123,7 @@ while datetime.datetime.now() < end_time:
 
 
 
-    #If for some reason, position becomes too large, execute emergency exit
-    cur_pos = pos_man.getCurrentPositionFromAcct()
-    if cur_pos >= MAX_POSITION:
-        EXIT_NOW = True
-        isTriggered = True
-        side = 'SELL'
-        size = pos_man.getCurrentPositionFromAcct()
-        print('EXCEEDED MAX POSITION, EMERGENCY SALE')
-        logfile.write('EMERGENCY SALE!!!!!' + '\n')
 
-    if cur_pos <= 0 and EXIT_NOW:
-        logfile.write('Exit because max position was exceeded')
-        raise Exception('MAX POSITON EXCEEDED')
     #---------------------------------------------------------------------------------------------------------
     #EXECUTION
 
@@ -156,48 +168,19 @@ while datetime.datetime.now() < end_time:
                 break
 
 
-            if order_man.getWorkingPrice()!= mkt_man.getBestPrice():
-                wp = order_man.getWorkingPrice()
-                print('working price', wp)
-                #logfile.write('working price:' + str(wp) + '\n')
-                logBestPx = str(mkt_man.getBestPrice())
-                print('best price', logBestPx)
-                #logfile.write('best price: ' + logBestPx + '\n')
 
-                remaining_size = SIZE - pos_man.getCurrentPositionFromAcct()
-                mkt_man.updateOrderSize(remaining_size)
-                if remaining_size <= 0:
-                    print('size already met', remaining_size)
-                    #logfile.write('size already met' + str(remaining_size) + '\n')
-                    break
+'''
+#If execution time runs out, cancel lingering orders
+old_order = order_man.cancelOrder()
+print('execution timed out, order cancelled', old_order)
+if old_order == 'DONE':
+    logfile.write('This was the executed price: ' + str(order_man.getExecutedPrice()) + '/n')
+    logfile.write('EXECUTION TIME: ' + str(datetime.datetime.now(timezone(GDAX_ZONE))) + '/n')
+#logfile.write('execution timed out, order cancelled ' + str(old_order) + '\n')
 
-                old_order = order_man.cancelOrder()
-                print('order cancelled',old_order)
-                #logfile.write('order cancelled' + str(old_order) + '\n')
-                print('order was cancelled, this is the new order size', remaining_size)
-                #logfile.write('order was cancelled, this is the new order size: ' + str(remaining_size) + '\n')
-                if old_order == 'DONE':
-                    break
-                else:
-                    cur_order = mkt_man.makePassiveOrder(post_only=True)
-                    print('new order id', cur_order)
-                    #logfile.write('new order id' + str(cur_order) + '/n')
-                    order_id =  cur_order['id']
-
-                order_man = OrderManager(public_client=public_client, auth_client=auth_client, product=PRODUCT,
-                                         side=SIDE, order_size=remaining_size, order_id=order_id)
-
-        #If execution time runs out, cancel lingering orders
-        old_order = order_man.cancelOrder()
-        print('execution timed out, order cancelled', old_order)
-        if old_order == 'DONE':
-            logfile.write('This was the executed price: ' + str(order_man.getExecutedPrice()) + '/n')
-            logfile.write('EXECUTION TIME: ' + str(datetime.datetime.now(timezone(GDAX_ZONE))) + '/n')
-        #logfile.write('execution timed out, order cancelled ' + str(old_order) + '\n')
-
-        #Reset Signal as to not Trigger Execution
-        signal = 0
-
+#Reset Signal as to not Trigger Execution
+signal = 0
+'''
 
 
 

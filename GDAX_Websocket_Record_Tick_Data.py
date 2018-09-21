@@ -47,7 +47,7 @@ message = {
 ws.send(json.dumps(message))
 
 resultList = []
-for i in range(0,3000):
+for i in range(0,4000):
     result = ws.recv()
     print('result', result)
     try:
@@ -79,10 +79,10 @@ def getTickerChannelData(listData):
     return pd.DataFrame(data,columns=['time','price','side','last_size','best_bid','best_ask','trade_id'])
 
 data = getTickerChannelData(resultList)
-pickle_in = open('streaming_data.pickle','wb')
+pickle_in = open('streaming_data_09_21_18_3.pickle','wb')
 pickle.dump(data, pickle_in)
 pickle_in.close()
-st.write(data,'streaming_tick_data_9_20_2018.xlsx','sheet1')
+st.write(data,'streaming_tick_data_9_21_2018_3.xlsx','sheet1')
 
 '''
 with open('../btc_usd.json', 'w') as fp:
