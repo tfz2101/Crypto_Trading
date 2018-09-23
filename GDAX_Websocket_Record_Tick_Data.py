@@ -79,10 +79,10 @@ def getTickerChannelData(listData):
     return pd.DataFrame(data,columns=['time','price','side','last_size','best_bid','best_ask','trade_id'])
 
 data = getTickerChannelData(resultList)
-pickle_in = open('streaming_data_09_21_18_3.pickle','wb')
+pickle_in = open('streaming_data_09_21_18_4.pickle','wb')
 pickle.dump(data, pickle_in)
 pickle_in.close()
-st.write(data,'streaming_tick_data_9_21_2018_3.xlsx','sheet1')
+st.write(data,'streaming_tick_data_9_21_2018_4.xlsx','sheet1')
 
 '''
 with open('../btc_usd.json', 'w') as fp:

@@ -22,8 +22,10 @@ def getHistoricalData(public_client,symbol='ETH-USD',start='2018-01-23T16:25:00.
         hist_data = public_client.get_product_historic_rates(symbol,start=start,granularity=granularity)
     else:
         hist_data = public_client.get_product_historic_rates(symbol, start=start, end=end,granularity=granularity)
-    hist_data = pd.DataFrame(hist_data, columns=['time','low','high','open','close','volume'])
+    print('hist data', hist_data)
 
+
+    hist_data = pd.DataFrame(hist_data, columns=['time','low','high','open','close','volume'])
     hist_data = hist_data.sort_values(['time'], ascending=True)
     hist_data = hist_data.reset_index(drop=True)
 
@@ -39,7 +41,6 @@ def getHistoricalDataFast(public_client,symbol='ETH-USD',start='2018-01-23T16:25
 
     #cols = {'time': 0, 'low': 1, 'high': 2, 'open': 3, 'close': 4, 'volume': 5}
     hist_data = sorted(hist_data, key=lambda row: row[0])  # sort by age
-
     #RETURNS historical data dataframe, sorted where the latest datapoint is in the last row
     return hist_data
 

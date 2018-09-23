@@ -59,7 +59,7 @@ curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
 transactions = []
 block_counter = 0
 
-for i in range(0,40):
+for i in range(0,800):
     result = ws.recv()
 
     #Converts json to dict
@@ -102,7 +102,7 @@ for i in range(0,40):
                     bars.append(bar)
 
                 pickle_bar = open('tick_block_history.pickle', 'wb')
-                pickle.dump(bar, pickle_bar)
+                pickle.dump(bars, pickle_bar)
                 pickle_bar.close()
 
                 #Create new block
@@ -119,11 +119,10 @@ for i in range(0,40):
         continue
 
 
-transactions = pd.DataFrame(transactions, columns=['time','px','size','side'])
-
-st.write(transactions, 'transactions.xlsx', 'sheet1')
-bars = pd.DataFrame(bars)
-st.write(bars, 'bars.xlsx','sheet1')
+#transactions = pd.DataFrame(transactions, columns=['time','px','size','side'])
+#st.write(transactions, 'transactions.xlsx', 'sheet1')
+#bars = pd.DataFrame(bars)
+#st.write(bars, 'bars.xlsx','sheet1')
 
 
 

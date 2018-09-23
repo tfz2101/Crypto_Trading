@@ -201,20 +201,22 @@ def getNextExecutionLevel(orig_data, size, side, colName):
     return data
 
 
-data = pd.read_excel('eth_dataset_09_14_complete.xlsx','sheet1',index_col='date')
+data = pd.read_excel('data_9_21_2018/streaming_tick_data_9_21_2018_3.xlsx','sheet1',index_col='time')
 BLOCK_SIZE = 5
 
+data = data.loc[:, ['price', 'last_size', 'side']]
 
 #Convert unicode time index to datetime index and gets rid of the 000Z suffix from API data
 def getTimeIndex(data):
     timeindex =  data.index.values
     for i in range(0, timeindex.shape[0]):
-        timeindex[i] = datetime.datetime.strptime(timeindex[i], '%Y-%m-%dT%H:%M:%S.%f0000Z')
+        timeindex[i] = datetime.datetime.strptime(timeindex[i], '%Y-%m-%dT%H:%M:%S.%f000Z')
         #print('time index', timeindex[i])
     data = data.set_index(timeindex)
     return data
 
 data = getTimeIndex(data)
+print(data)
 #st.write(data, 'eth_dataset_7_15_7_18_datesindex.xlsx','sheet1')
 
 
@@ -223,7 +225,7 @@ block_data, full_block_data = getFixedVolumeData(data, BLOCK_SIZE)#col_name = ['
 col_name = ['end_time','vwap', 'num_trades']
 block_data = pd.DataFrame(block_data, columns=col_name)
 block_data = block_data.set_index('end_time')
-st.write(block_data, 'fixed_volume_streaming_data_VWAP_9_14_9_18_raw_data.xlsx','Sheet1')
+st.write(block_data, 'fixed_volume_streaming_data_VWAP_9_21_3_raw_data.xlsx','Sheet1')
 
 
 

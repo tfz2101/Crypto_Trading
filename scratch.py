@@ -13,4 +13,6 @@ rd_series = pd.Series(rd, index=data.index.values)
 print(rd_series)
 
 
-
+x = np.array([1,2,3])
+print('x', x)
+print('mean',np.mean(x))

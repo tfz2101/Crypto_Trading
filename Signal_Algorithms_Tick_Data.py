@@ -12,7 +12,7 @@ import sys
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
-from GDAX_Data_Fncs import getHistoricalDataFast
+from GDAX_Data_Fncs import getHistoricalDataFast,getHistoricalData
 from pytz import timezone
 
 
@@ -155,4 +155,9 @@ def getLiveSignal2(dataDF):
     return [raw_cur_data.ix[endInd, 'time'], raw_cur_data.ix[endInd, 'close'], pred]
 
 #signal =  getLiveSignal2(dataDF)
+
+
+
+
+
 
