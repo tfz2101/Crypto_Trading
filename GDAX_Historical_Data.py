@@ -31,13 +31,13 @@ def getTimeIndex(data, start, timedelta):
 public_client = gdax.PublicClient(api_url='https://api.pro.coinbase.com')
 
 start_time =  datetime.datetime.now()
-run_time_sec = 60 * 60 * 9
+run_time_sec = 60 * 60 * 9 * 0
 end_time = start_time + datetime.timedelta(seconds=run_time_sec)
 
 gdax_zone = 'Atlantic/Azores'
 cols = {'time': 0, 'low': 1, 'high': 2, 'open': 3, 'close': 4, 'volume': 5}
-FAST_MA_LOOKBACK = 2
-SLOW_MA_LOOKBACK = 3
+FAST_MA_LOOKBACK = 5
+SLOW_MA_LOOKBACK = 30
 
 #@TODO: WHAT IF THE STD IS 0, I.E PRICES DON'T CHANGE FOR A GIVEN TIME PERIOD. Exception handle NAs
 
@@ -70,6 +70,7 @@ while datetime.datetime.now() < end_time:
     fast_ma = np.mean(fast_data)
     print('fast ma', fast_ma)
     min1_zscore = (fast_ma - slow_ma)/ma_std
+
 
     pickling = open('zscore_1min.pickle','wb')
     pickle.dump(min1_zscore, pickling)

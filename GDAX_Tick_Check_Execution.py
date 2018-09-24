@@ -57,24 +57,24 @@ hist_read_time = start_time
 HIST_READ_INTERVAL = datetime.timedelta(seconds=5)
 
 #MAIN LOOP
-#while datetime.datetime.now() < end_time:
+while datetime.datetime.now() < end_time:
 
 
-all_orders = auth_client.get_orders()[0]
+    all_orders = auth_client.get_orders()[0]
 
-#Get time of last order
-timestamps = []
-for order in all_orders:
-    timestamp = datetime.datetime.strptime(str(order['created_at']),'%Y-%m-%dT%H:%M:%S.%fZ')
-    order['created_at'] = timestamp
-    timestamps.append(timestamp)
-latest_time = max(timestamps)
-print(latest_time)
+    #Get time of last order
+    timestamps = []
+    for order in all_orders:
+        timestamp = datetime.datetime.strptime(str(order['created_at']),'%Y-%m-%dT%H:%M:%S.%fZ')
+        order['created_at'] = timestamp
+        timestamps.append(timestamp)
+    latest_time = max(timestamps)
+    print(latest_time)
 
-#Cancel all orders except the latest one
-for order in all_orders:
-    if order['created_at'] < latest_time:
-        order_id = str(order['id'])
-        auth_client.cancel_order(order_id=order_id)
+    #Cancel all orders except the latest one
+    for order in all_orders:
+        if order['created_at'] < latest_time:
+            order_id = str(order['id'])
+            auth_client.cancel_order(order_id=order_id)
 
-time.sleep(30)
+    time.sleep(30)

@@ -45,27 +45,28 @@ BTC_ACCT_ID = btc_acc_id_file.readline()
 hist_data_cols = {'time': 0, 'low': 1, 'high': 2, 'open': 3, 'close': 4, 'volume': 5}
 tick_data_cols = {'time': 0, 'vwap': 1, 'num_trades': 2, 'id': 3}
 
-BUY_SIZE = 0.001
 PRODUCT = 'ETH-USD'
-MAX_POSITION = 0.003
-EXIT_NOW = False
-GDAX_ZONE = 'Atlantic/Azores'
+MAX_POSITION = 0.3
 
+PROP_POSITION = 171.065047   #@TODO: THIS WILL CHANGE!!!
+
+GDAX_ZONE = 'Atlantic/Azores'
+SIZE = 0.1
 
 
 start_time =  datetime.datetime.now()
-run_time_sec = 60 * 60 * 9
+run_time_sec = 60 * 60 * 9 * 0 + 1
 end_time = start_time + datetime.timedelta(seconds=run_time_sec)
 hist_read_time = start_time
 HIST_READ_INTERVAL = datetime.timedelta(seconds=5)
 
 #Empty order manager
 pos_man = PositionManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, product_acct_id=ETH_ACCT_ID)
-SIZE = 0.1
-SIZE_MAX = 0.003
 
 last_used_block_id = -1000
 MIN_TICK_BARS = 60
+
+#@TODO: CHECK FOR OUTDATED FEEDS FOR BOTH TICK AND HISTORICAL DATA
 
 #Main Loop
 while datetime.datetime.now() < end_time:
@@ -91,7 +92,7 @@ while datetime.datetime.now() < end_time:
         tick_bars = pickle.load(pickle_in)
             #tick bar format: list[[time, vwap, num_trades]]
         tick_bars = np.array(tick_bars)
-        #print('tick bars', tick_bars)
+        print('tick bars', pd.DataFrame(tick_bars))
     except EOFError:
         continue
 
@@ -131,19 +132,32 @@ while datetime.datetime.now() < end_time:
     #Execute or Not Execute
     if isExecute:
         print('EXECUTE NOW!!')
+
+        # Are we over MAX_POSITION?
+        current_position = pos_man.getCurrentPositionFromAcct() - PROP_POSITION
+        if trade_rec > 0.0 and current_position >= MAX_POSITION:
+                print('WE ARE ALREADY MAXED OUT')
+                continue
+        if trade_rec < 0 and current_position <= 0.0:
+                print('WE DONT HAVE ANY TO SELL')
+                continue
+
+
         size = SIZE
         if trade_rec > 0:
             side = 'BUY'
         if trade_rec < 0:
             side = 'SELL'
+
         '''
         mkt_man = MarketManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size)
     
         cur_order = mkt_man.makePassiveOrder(post_only=True)
         print('signal trade initiated!',cur_order)
-    
+
+        
         order_id =  cur_order['id']
-        order_man= OrderManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size,order_id=order_id)
+        order_man = OrderManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size,order_id=order_id)
     
         #logfile.write('current position: ' + str(cur_pos) + '\n')
         '''
