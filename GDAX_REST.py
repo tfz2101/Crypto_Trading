@@ -44,7 +44,6 @@ message = {
 }
 '''
 
-
 # Send subscribe Message
 ws.send(json.dumps(message))
 
@@ -59,7 +58,12 @@ block_counter = 1
 curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': [], 'id': 0}
 transactions = []
 
-for i in range(0,600):
+start_time =  datetime.datetime.now()
+run_time_sec = 60 * 60 * 9
+end_time = start_time + datetime.timedelta(seconds=run_time_sec)
+
+while datetime.datetime.now() < end_time:
+# for i in range(0,600):
     result = ws.recv()
 
     #Converts json to dict
@@ -92,7 +96,7 @@ for i in range(0,600):
                 vwap_lst = [size * px for px,size in zip(curBlock['prices'], curBlock['sizes'])]
                 vwap = float(sum(vwap_lst))/sum(curBlock['sizes'])
                 num_trades = len(curBlock['sizes'])
-                bar = [time, vwap, num_trades]
+                bar = [time, vwap, num_trades, curBlock['id']]
                 if len(bars) >= LEDGE_LIMIT:
                     del bars[0]
                     bars.append(bar)

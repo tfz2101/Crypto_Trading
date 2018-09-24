@@ -65,76 +65,88 @@ SIZE = 0.1
 SIZE_MAX = 0.003
 
 last_used_block_id = -1000
+MIN_TICK_BARS = 60
 
 #Main Loop
-#while datetime.datetime.now() < end_time:
-isExecute = False
-isNewBar = False
+while datetime.datetime.now() < end_time:
+    isExecute = False
+
+    #Read Updated Historical Data
+    if datetime.datetime.now() >= hist_read_time:
+        print('READING HISTORICAL DATA')
+        pickle_1min = open('zscore_1min.pickle')
+        min_1_z = pickle.load(pickle_1min)
+        print('zscores 1min', min_1_z)
+        pickle_5min = open('zscore_5min.pickle')
+        min_5_z = pickle.load(pickle_5min)
+        print('zscores 5min', min_5_z)
+        pickle_15min = open('zscore_15min.pickle')
+        min_15_z = pickle.load(pickle_15min)
+        print('zscores 15min', min_15_z)
+        hist_read_time =  hist_read_time + HIST_READ_INTERVAL
+
+    #Read Updated Tick Block Data
+    try:
+        pickle_in = open('tick_block_history.pickle', 'rb')
+        tick_bars = pickle.load(pickle_in)
+            #tick bar format: list[[time, vwap, num_trades]]
+        tick_bars = np.array(tick_bars)
+        #print('tick bars', tick_bars)
+    except EOFError:
+        continue
+
+        #Check to see if there are at least 60 blocks in the tick data
+    if tick_bars.shape[0] < MIN_TICK_BARS:
+        continue
+
+        #Check if there has been an updated block
+    if tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']] <= last_used_block_id:
+        continue
+
+        #Record last used block
+    last_used_block_id = tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']]
+    pickle_last_block = open('last_used_block_id.pickle', 'wb')
+    pickle.dump(last_used_block_id, pickle_last_block)
+    pickle_last_block.close()
 
 
-#Read Updated Historical Data
-if datetime.datetime.now() >= hist_read_time:
-    #read historical data pickle
-    pickle_1min = open('zscore_1min.pickle')
-    min_1_z = pickle.load(pickle_1min)
-    pickle_5min = open('zscore_5min.pickle')
-    min_5_z = pickle.load(pickle_5min)
-    pickle_15min = open('zscore_15min.pickle')
-    min_15_z = pickle.load(pickle_15min)
-    hist_read_time =  hist_read_time + HIST_READ_INTERVAL
 
-#Read Updated Tick Block Data
-pickle_in = open('tick_block_history.pickle', 'rb')
-tick_bars = pickle.load(pickle_in)
-    #tick bar format: list[[time, vwap, num_trades]]
-tick_bars = np.array(tick_bars)
+    #Recalcs Signals with updated Tick Block Data - Only do it if new blocks are present
+    LOOKBACK = 60
 
-    #Check if there has been an updated block
-if tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']] > last_used_block_id:
-    isNewBar = True
+    price_bars_lookback = tick_bars[(tick_bars.shape[0] - LOOKBACK):tick_bars.shape[0], tick_data_cols['vwap']].astype('float')
+    print('price bars for ticks', price_bars_lookback)
+    num_trades_lookback = tick_bars[(tick_bars.shape[0] - LOOKBACK):tick_bars.shape[0], tick_data_cols['num_trades']].astype('float')
+    print('num trades', num_trades_lookback)
+    vwap = np.dot(price_bars_lookback, num_trades_lookback) / np.sum(num_trades_lookback)
+    print('vwap', vwap)
+    price_bars_std = np.std(price_bars_lookback)
+    tick_zscore = (tick_bars[tick_bars.shape[0] - 1, tick_data_cols['vwap']] - vwap) / price_bars_std
+    print('tick zsscore', tick_zscore)
+    trade_rec = getThreeAgreeSignal(min_1_z, min_5_z, min_15_z, tick_zscore)
+    print('trade rec', trade_rec)
+    if abs(trade_rec) > 0:
+        isExecute = True
 
-    #Record last used block
-last_used_block_id = tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']]
-pickle_last_block = open('last_used_block_id.pickle')
-pickle.dump(pickle_last_block, last_used_block_id)
-pickle_last_block.close()
-
-
-print('data', tick_bars)
-
-
-
-#Recalcs Signals with updated Tick Block Data
-LOOKBACK = 60
-
-price_bars_lookback = tick_bars[(tick_bars.shape[0] - LOOKBACK):tick_bars.shape[0], tick_data_cols['vwap']].astype('float')
-num_trades_lookback = tick_bars[(tick_bars.shape[0] - LOOKBACK):tick_bars.shape[0], tick_data_cols['num_trades']].astype('float')
-vwap = np.dot(price_bars_lookback, num_trades_lookback) / np.sum(num_trades_lookback)
-price_bars_std = np.std(price_bars_lookback)
-tick_zscore = (tick_data_cols[tick_bars.shape[0] - 1, tick_data_cols['vwap']] - vwap) / price_bars_std
-
-trade_rec = getThreeAgreeSignal(min_1_z, min_5_z, min_15_z, tick_zscore)
-if abs(trade_rec) > 0:
-    isExecute = True
-
-#Execute or Not Execute
-if isExecute and isNewBar:
-    size = SIZE
-    if trade_rec > 0:
-        side = 'BUY'
-    if trade_rec < 0:
-        side = 'SELL'
-
-    mkt_man = MarketManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size)
-
-    cur_order = mkt_man.makePassiveOrder(post_only=True)
-    print('signal trade initiated!',cur_order)
-
-    order_id =  cur_order['id']
-    order_man= OrderManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size,order_id=order_id)
-
-    #logfile.write('current position: ' + str(cur_pos) + '\n')
-
+    #Execute or Not Execute
+    if isExecute:
+        print('EXECUTE NOW!!')
+        size = SIZE
+        if trade_rec > 0:
+            side = 'BUY'
+        if trade_rec < 0:
+            side = 'SELL'
+        '''
+        mkt_man = MarketManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size)
+    
+        cur_order = mkt_man.makePassiveOrder(post_only=True)
+        print('signal trade initiated!',cur_order)
+    
+        order_id =  cur_order['id']
+        order_man= OrderManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size,order_id=order_id)
+    
+        #logfile.write('current position: ' + str(cur_pos) + '\n')
+        '''
 
 
 

@@ -16,3 +16,7 @@ print(rd_series)
 x = np.array([1,2,3])
 print('x', x)
 print('mean',np.mean(x))
+
+a = 3.4
+b = np.nan()
+

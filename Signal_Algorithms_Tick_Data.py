@@ -54,7 +54,8 @@ def getMA(data, index, rowIndex, lookback):
     return np.average(slice)
 
 def getThreeAgreeSignal(min_1_z, min_5_z, min_15_z, block_zscore):
-    if abs(np.sign[block_zscore, min_1_z, min_5_z]) == 3:
+    print('signs', np.sign([block_zscore, min_1_z, min_5_z]))
+    if abs(np.sum(np.sign([block_zscore, min_1_z, min_5_z]))) == 3:
         return np.sign(min_15_z)
     else:
         return 0

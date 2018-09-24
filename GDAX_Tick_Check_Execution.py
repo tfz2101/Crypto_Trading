@@ -48,6 +48,18 @@ tick_data_cols = {'time': 0, 'vwap': 1, 'num_trades': 2, 'id': 3}
 PRODUCT = 'ETH-USD'
 
 pos_man = PositionManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, product_acct_id=ETH_ACCT_ID)
+
+
+start_time =  datetime.datetime.now()
+run_time_sec = 60 * 60 * 9
+end_time = start_time + datetime.timedelta(seconds=run_time_sec)
+hist_read_time = start_time
+HIST_READ_INTERVAL = datetime.timedelta(seconds=5)
+
+#MAIN LOOP
+#while datetime.datetime.now() < end_time:
+
+
 all_orders = auth_client.get_orders()[0]
 
 #Get time of last order
@@ -65,4 +77,4 @@ for order in all_orders:
         order_id = str(order['id'])
         auth_client.cancel_order(order_id=order_id)
 
-
+time.sleep(30)
