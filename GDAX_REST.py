@@ -55,11 +55,11 @@ def toUnicode(string):
 bars = []
 SIZE = 5
 LEDGE_LIMIT = 61
-curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
+block_counter = 1
+curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': [], 'id': 0}
 transactions = []
-block_counter = 0
 
-for i in range(0,800):
+for i in range(0,600):
     result = ws.recv()
 
     #Converts json to dict
@@ -85,12 +85,10 @@ for i in range(0,800):
             size_leftover = size
             while size_leftover - curBlock['sizeLeft'] > 0:
                 size_leftover = size_leftover - curBlock['sizeLeft']
-                #print('size lefover', size_leftover)
                 curBlock['sizes'].append(curBlock['sizeLeft'])
                 curBlock['prices'].append(px)
 
                 #Calc completed block
-                #print('current blockness', curBlock)
                 vwap_lst = [size * px for px,size in zip(curBlock['prices'], curBlock['sizes'])]
                 vwap = float(sum(vwap_lst))/sum(curBlock['sizes'])
                 num_trades = len(curBlock['sizes'])
@@ -106,7 +104,9 @@ for i in range(0,800):
                 pickle_bar.close()
 
                 #Create new block
-                curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': []}
+                curBlock = {'sizeLeft': SIZE, 'prices': [], 'sizes': [], 'id': block_counter}
+                block_counter += 1
+
             #We know size_leftover is not bigger than SIZE from above loop.
             if size_leftover > 0:
                 curBlock['sizes'].append(size_leftover)

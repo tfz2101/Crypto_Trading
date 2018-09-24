@@ -23,7 +23,7 @@ MODE = 'REAL'
 
 if MODE == 'REAL':
     API_FILE = '../gdax_real.txt'
-    PUBLIC_CLIENT = gdax.PublicClient()
+    PUBLIC_CLIENT = gdax.PublicClient(api_url='https://api.pro.coinbase.com')
     AUTH_CLIENT = 'https://api.gdax.com'
 elif MODE == 'FAKE':
     API_FILE = '../gdax_fake.txt'
@@ -43,7 +43,7 @@ btc_acc_id_file  = open('../btc_acct_id.txt','r')
 BTC_ACCT_ID = btc_acc_id_file.readline()
 
 hist_data_cols = {'time': 0, 'low': 1, 'high': 2, 'open': 3, 'close': 4, 'volume': 5}
-tick_data_cols = {'time': 0, 'vwap': 1, 'num_trades': 2}
+tick_data_cols = {'time': 0, 'vwap': 1, 'num_trades': 2, 'id': 3}
 
 BUY_SIZE = 0.001
 PRODUCT = 'ETH-USD'
@@ -63,11 +63,13 @@ HIST_READ_INTERVAL = datetime.timedelta(seconds=5)
 pos_man = PositionManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, product_acct_id=ETH_ACCT_ID)
 SIZE = 0.1
 SIZE_MAX = 0.003
-isNewBar = True
+
+last_used_block_id = -1000
 
 #Main Loop
 #while datetime.datetime.now() < end_time:
 isExecute = False
+isNewBar = False
 
 
 #Read Updated Historical Data
@@ -84,8 +86,19 @@ if datetime.datetime.now() >= hist_read_time:
 #Read Updated Tick Block Data
 pickle_in = open('tick_block_history.pickle', 'rb')
 tick_bars = pickle.load(pickle_in)
-#tick bar format: list[[time, vwap, num_trades]]
+    #tick bar format: list[[time, vwap, num_trades]]
 tick_bars = np.array(tick_bars)
+
+    #Check if there has been an updated block
+if tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']] > last_used_block_id:
+    isNewBar = True
+
+    #Record last used block
+last_used_block_id = tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']]
+pickle_last_block = open('last_used_block_id.pickle')
+pickle.dump(pickle_last_block, last_used_block_id)
+pickle_last_block.close()
+
 
 print('data', tick_bars)
 
@@ -121,23 +134,6 @@ if isExecute and isNewBar:
     order_man= OrderManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size,order_id=order_id)
 
     #logfile.write('current position: ' + str(cur_pos) + '\n')
-
-
-
-'''
-#If execution time runs out, cancel lingering orders
-old_order = order_man.cancelOrder()
-print('execution timed out, order cancelled', old_order)
-if old_order == 'DONE':
-    logfile.write('This was the executed price: ' + str(order_man.getExecutedPrice()) + '/n')
-    logfile.write('EXECUTION TIME: ' + str(datetime.datetime.now(timezone(GDAX_ZONE))) + '/n')
-#logfile.write('execution timed out, order cancelled ' + str(old_order) + '\n')
-
-#Reset Signal as to not Trigger Execution
-signal = 0
-'''
-
-
 
 
 
