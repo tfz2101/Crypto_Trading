@@ -100,7 +100,8 @@ while datetime.datetime.now() < end_time:
     try:
         #Converts json to dict
         result = json.loads(result)
-        print('result', result)
+        print('trade id', result['trade_id'])
+        print('sequence', result['sequence'])
 
         px =  float(result['price'])
         size = float(result['last_size'])
