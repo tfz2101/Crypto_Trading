@@ -31,7 +31,7 @@ def getTimeIndex(data, start, timedelta):
 public_client = gdax.PublicClient(api_url='https://api.pro.coinbase.com')
 
 start_time =  datetime.datetime.now()
-run_time_sec = 60 * 60 * 9 * 0
+run_time_sec = 60 * 60 * 9
 end_time = start_time + datetime.timedelta(seconds=run_time_sec)
 
 gdax_zone = 'Atlantic/Azores'
@@ -140,4 +140,4 @@ while datetime.datetime.now() < end_time:
     pickle.dump(min15_zscore, pickling)
     pickling.close()
 
-    time.sleep(30)
+    time.sleep(20)

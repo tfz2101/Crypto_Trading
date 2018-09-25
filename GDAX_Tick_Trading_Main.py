@@ -48,14 +48,14 @@ tick_data_cols = {'time': 0, 'vwap': 1, 'num_trades': 2, 'id': 3}
 PRODUCT = 'ETH-USD'
 MAX_POSITION = 0.3
 
-PROP_POSITION = 171.065047   #@TODO: THIS WILL CHANGE!!!
+PROP_POSITION = 171.06504777   #@TODO: THIS WILL CHANGE!!!
 
 GDAX_ZONE = 'Atlantic/Azores'
 SIZE = 0.1
 
 
 start_time =  datetime.datetime.now()
-run_time_sec = 60 * 60 * 9 * 0 + 1
+run_time_sec = 60 * 60 * 9
 end_time = start_time + datetime.timedelta(seconds=run_time_sec)
 hist_read_time = start_time
 HIST_READ_INTERVAL = datetime.timedelta(seconds=5)
@@ -68,6 +68,8 @@ MIN_TICK_BARS = 60
 
 #@TODO: CHECK FOR OUTDATED FEEDS FOR BOTH TICK AND HISTORICAL DATA
 
+#starting capital = 184.16
+
 #Main Loop
 while datetime.datetime.now() < end_time:
     isExecute = False
@@ -75,25 +77,31 @@ while datetime.datetime.now() < end_time:
     #Read Updated Historical Data
     if datetime.datetime.now() >= hist_read_time:
         print('READING HISTORICAL DATA')
-        pickle_1min = open('zscore_1min.pickle')
+        pickle_1min = open('zscore_1min.pickle', 'rb')
         min_1_z = pickle.load(pickle_1min)
+        pickle_1min.close()
         print('zscores 1min', min_1_z)
-        pickle_5min = open('zscore_5min.pickle')
+        pickle_5min = open('zscore_5min.pickle', 'rb')
         min_5_z = pickle.load(pickle_5min)
+        pickle_5min.close()
         print('zscores 5min', min_5_z)
-        pickle_15min = open('zscore_15min.pickle')
+        pickle_15min = open('zscore_15min.pickle', 'rb')
         min_15_z = pickle.load(pickle_15min)
+        pickle_15min.close()
         print('zscores 15min', min_15_z)
+
         hist_read_time =  hist_read_time + HIST_READ_INTERVAL
 
     #Read Updated Tick Block Data
     try:
         pickle_in = open('tick_block_history.pickle', 'rb')
         tick_bars = pickle.load(pickle_in)
+        pickle_in.close()
             #tick bar format: list[[time, vwap, num_trades]]
         tick_bars = np.array(tick_bars)
-        print('tick bars', pd.DataFrame(tick_bars))
-    except EOFError:
+
+        #print('tick bars', pd.DataFrame(tick_bars))
+    except:
         continue
 
         #Check to see if there are at least 60 blocks in the tick data
@@ -135,6 +143,8 @@ while datetime.datetime.now() < end_time:
 
         # Are we over MAX_POSITION?
         current_position = pos_man.getCurrentPositionFromAcct() - PROP_POSITION
+        print('current position', current_position)
+
         if trade_rec > 0.0 and current_position >= MAX_POSITION:
                 print('WE ARE ALREADY MAXED OUT')
                 continue
@@ -142,14 +152,13 @@ while datetime.datetime.now() < end_time:
                 print('WE DONT HAVE ANY TO SELL')
                 continue
 
-
         size = SIZE
+
         if trade_rec > 0:
             side = 'BUY'
         if trade_rec < 0:
             side = 'SELL'
 
-        '''
         mkt_man = MarketManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size)
     
         cur_order = mkt_man.makePassiveOrder(post_only=True)
@@ -160,7 +169,9 @@ while datetime.datetime.now() < end_time:
         order_man = OrderManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size,order_id=order_id)
     
         #logfile.write('current position: ' + str(cur_pos) + '\n')
-        '''
+        #When isExecute:
+                #log
+                    #time
 
 
 
