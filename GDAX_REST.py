@@ -1,4 +1,4 @@
-from websocket import create_connection, WebSocketApp, enableTrace
+from websocket import create_connection, _exceptions
 import thread
 import json, time, ast
 import pandas as pd
@@ -7,7 +7,7 @@ import datetime
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
-import pickle
+import cPickle
 
 
 def on_message(ws, message):
@@ -136,7 +136,7 @@ while datetime.datetime.now() < end_time:
                     bars.append(bar)
 
                 pickle_bar = open('tick_block_history.pickle', 'wb')
-                pickle.dump(bars, pickle_bar)
+                cPickle.dump(bars, pickle_bar)
                 pickle_bar.close()
 
                 #Create new block
@@ -149,9 +149,14 @@ while datetime.datetime.now() < end_time:
                 curBlock['sizeLeft'] -= size_leftover
                 curBlock['prices'].append(px)
         print('curblock', curBlock)
+    except _exceptions.WebSocketConnectionClosedException:
+        # Create connection
+        print('Connection Lost')
+        ws = create_connection("wss://ws-feed.pro.coinbase.com")
+        ws.send(json.dumps(message))
+        continue
     except:
         continue
-
 
 #transactions = pd.DataFrame(transactions, columns=['time','px','size','side'])
 #st.write(transactions, 'transactions.xlsx', 'sheet1')
@@ -159,32 +164,6 @@ while datetime.datetime.now() < end_time:
 #st.write(bars, 'bars.xlsx','sheet1')
 
 
-
-
-def getTickerChannelData(listData):
-    #EXPECTS A LIST OF DICTIONARIES
-    def toUnicode(string):
-        return  unicode(string, "utf-8")
-
-    data = []
-    for d in listData:
-        if d[toUnicode('type')] == 'ticker':
-
-            try:
-                #print('time', d[toUnicode('time')])
-                #print('price',d[toUnicode('price')])
-                #print('side',d[toUnicode('side')])
-                #print('size',d[toUnicode('last_size')])
-                #print('bid',d[toUnicode('best_bid')])
-                #print('ask',d[toUnicode('best_ask')])
-                data.append([d[toUnicode('time')],d[toUnicode('price')],d[toUnicode('side')],d[toUnicode('last_size')],d[toUnicode('best_bid')],d[toUnicode('best_ask')],d[toUnicode('trade_id')]])
-            except:
-                pass
-
-    return pd.DataFrame(data,columns=['time','price','side','last_size','best_bid','best_ask','trade_id'])
-
-#data = getTickerChannelData(resultList)
-#st.write(data,'streaming_tick_data7.xlsx','sheet1')
 
 '''
 with open('../btc_usd.json', 'w') as fp:

@@ -8,7 +8,7 @@ from Execution_Algorithms import *
 from Signal_Algorithms_Tick_Data import getMA,getThreeAgreeSignal
 from pytz import timezone
 import sys
-import pickle
+import cPickle
 
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
@@ -63,74 +63,108 @@ HIST_READ_INTERVAL = datetime.timedelta(seconds=5)
 #Empty order manager
 pos_man = PositionManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, product_acct_id=ETH_ACCT_ID)
 
+#Empty order manager, is string initially
+order_man = 'EMPTY'
 last_used_block_id = -1000
 MIN_TICK_BARS = 60
 
 #@TODO: CHECK FOR OUTDATED FEEDS FOR BOTH TICK AND HISTORICAL DATA
-
+#@TODO: CANCEL LAST ORDER BEFORE EXECUTING LATEST ONE
 #starting capital = 184.16
 
-#Main Loop
+
+'''
+cur_order = auth_client.buy(price=211,
+                             size=0.1,
+                             product_id=PRODUCT,
+                             post_only=True)
+
+order_id = cur_order['id']
+
+cancel_order_id = auth_client.cancel_order(order_id=order_id)
+print('cancel order id', cancel_order_id)
+'''
+
+
+#MAIN LOOP
 while datetime.datetime.now() < end_time:
     isExecute = False
 
-    #Read Updated Historical Data
+    #READ HISTORICAL DATA
     if datetime.datetime.now() >= hist_read_time:
         print('READING HISTORICAL DATA')
         pickle_1min = open('zscore_1min.pickle', 'rb')
-        min_1_z = pickle.load(pickle_1min)
-        pickle_1min.close()
+        try:
+            min_1_z = cPickle.load(pickle_1min)
+            pickle_1min.close()
+        except EOFError:
+            min_1_z = cPickle.load(pickle_1min)
+            pickle_1min.close()
         print('zscores 1min', min_1_z)
         pickle_5min = open('zscore_5min.pickle', 'rb')
-        min_5_z = pickle.load(pickle_5min)
-        pickle_5min.close()
+        try:
+            min_5_z = cPickle.load(pickle_5min)
+            pickle_5min.close()
+        except EOFError:
+            min_5_z = cPickle.load(pickle_5min)
+            pickle_5min.close()
         print('zscores 5min', min_5_z)
         pickle_15min = open('zscore_15min.pickle', 'rb')
-        min_15_z = pickle.load(pickle_15min)
-        pickle_15min.close()
+        try:
+            min_15_z = cPickle.load(pickle_15min)
+            pickle_15min.close()
+        except EOFError:
+            min_15_z = cPickle.load(pickle_15min)
+            pickle_15min.close()
         print('zscores 15min', min_15_z)
 
         hist_read_time =  hist_read_time + HIST_READ_INTERVAL
 
-    #Read Updated Tick Block Data
-    try:
+    #READ TICK BLOCKS DATA
         pickle_in = open('tick_block_history.pickle', 'rb')
-        tick_bars = pickle.load(pickle_in)
-        pickle_in.close()
+        try:
+            tick_bars = cPickle.load(pickle_in)
+            pickle_in.close()
+        except EOFError:
+            tick_bars = cPickle.load(pickle_in)
+            pickle_in.close()
+
             #tick bar format: list[[time, vwap, num_trades]]
         tick_bars = np.array(tick_bars)
 
-        #print('tick bars', pd.DataFrame(tick_bars))
-    except:
-        continue
 
         #Check to see if there are at least 60 blocks in the tick data
     if tick_bars.shape[0] < MIN_TICK_BARS:
+        print('NOT ENOUGH TICK BARS')
         continue
 
         #Check if there has been an updated block
     if tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']] <= last_used_block_id:
+        print('NO NEW BLOCKS')
         continue
+
+        #Since there's new block, cancel old order
 
         #Record last used block
     last_used_block_id = tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']]
     pickle_last_block = open('last_used_block_id.pickle', 'wb')
-    pickle.dump(last_used_block_id, pickle_last_block)
+    cPickle.dump(last_used_block_id, pickle_last_block)
     pickle_last_block.close()
 
-
+    
 
     #Recalcs Signals with updated Tick Block Data - Only do it if new blocks are present
     LOOKBACK = 60
 
     price_bars_lookback = tick_bars[(tick_bars.shape[0] - LOOKBACK):tick_bars.shape[0], tick_data_cols['vwap']].astype('float')
-    print('price bars for ticks', price_bars_lookback)
+    #print('price bars for ticks', price_bars_lookback)
     num_trades_lookback = tick_bars[(tick_bars.shape[0] - LOOKBACK):tick_bars.shape[0], tick_data_cols['num_trades']].astype('float')
-    print('num trades', num_trades_lookback)
+    #print('num trades', num_trades_lookback)
     vwap = np.dot(price_bars_lookback, num_trades_lookback) / np.sum(num_trades_lookback)
     print('vwap', vwap)
     price_bars_std = np.std(price_bars_lookback)
-    tick_zscore = (tick_bars[tick_bars.shape[0] - 1, tick_data_cols['vwap']] - vwap) / price_bars_std
+    last_tick_px = tick_bars[tick_bars.shape[0] - 1, tick_data_cols['vwap']]
+    tick_zscore = (last_tick_px - vwap) / price_bars_std
     print('tick zsscore', tick_zscore)
     trade_rec = getThreeAgreeSignal(min_1_z, min_5_z, min_15_z, tick_zscore)
     print('trade rec', trade_rec)
@@ -141,6 +175,9 @@ while datetime.datetime.now() < end_time:
     if isExecute:
         print('EXECUTE NOW!!')
 
+        #First, cancel the old order
+        cancel_order_id = order_man.cancelOrder()
+
         # Are we over MAX_POSITION?
         current_position = pos_man.getCurrentPositionFromAcct() - PROP_POSITION
         print('current position', current_position)
@@ -148,7 +185,7 @@ while datetime.datetime.now() < end_time:
         if trade_rec > 0.0 and current_position >= MAX_POSITION:
                 print('WE ARE ALREADY MAXED OUT')
                 continue
-        if trade_rec < 0 and current_position <= 0.0:
+        if trade_rec < 0.0 and current_position <= 0.0:
                 print('WE DONT HAVE ANY TO SELL')
                 continue
 
@@ -161,10 +198,10 @@ while datetime.datetime.now() < end_time:
 
         mkt_man = MarketManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size)
     
-        cur_order = mkt_man.makePassiveOrder(post_only=True)
+        cur_order = mkt_man.makeLimitOrder()
         print('signal trade initiated!',cur_order)
 
-        
+            #Record the order id of the current order
         order_id =  cur_order['id']
         order_man = OrderManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size,order_id=order_id)
     

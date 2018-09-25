@@ -218,6 +218,36 @@ class MarketManager:
                                               product_id=self.product, post_only=post_only)
         return cur_order
 
+    # Make an limit order that at a limit px, POST ONLY. If the current price is better, then readjust to the current price.
+    def makeLimitOrder(self, limit_px):
+        #MUST BE AN POST ONLY ORDER
+        passive_px = limit_px
+        print('WORKING THIS PRICE', passive_px)
+        cross_size = self.order_size
+        logfile.write('INITIAL ORDER PX: ' + str(passive_px) + '\n')
+
+        if self.side == "BUY":
+            cur_order = self.auth_client.buy(price=passive_px,
+                                             size=cross_size,
+                                             product_id=self.product, post_only=True)
+        elif self.side == "SELL":
+            cur_order = self.auth_client.sell(price=passive_px,
+                                              size=cross_size,
+                                              product_id=self.product, post_only=True)
+
+        if str(cur_order['status']) == 'rejected':
+            passive_px = self.getBestPrice()
+
+            if self.side == "BUY":
+                cur_order = self.auth_client.buy(price=passive_px,
+                                                 size=cross_size,
+                                                 product_id=self.product, post_only=True)
+            elif self.side == "SELL":
+                cur_order = self.auth_client.sell(price=passive_px,
+                                                  size=cross_size,
+                                                  product_id=self.product, post_only=True)
+        return cur_order
+
     #Make a order based off a given limit price(passive or aggressive).
     #If current price is better than limit price, either sit on the current bid (passive) or cross the spread (aggressive)
     def makeAggressiveOrder(self):

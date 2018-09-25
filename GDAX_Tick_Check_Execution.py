@@ -8,7 +8,7 @@ from Execution_Algorithms import *
 from Signal_Algorithms_Tick_Data import getMA,getThreeAgreeSignal
 from pytz import timezone
 import sys
-import pickle
+import cPickle
 
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
