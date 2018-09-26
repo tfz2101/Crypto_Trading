@@ -46,7 +46,7 @@ hist_data_cols = {'time': 0, 'low': 1, 'high': 2, 'open': 3, 'close': 4, 'volume
 tick_data_cols = {'time': 0, 'vwap': 1, 'num_trades': 2, 'id': 3}
 
 PRODUCT = 'ETH-USD'
-MAX_POSITION = 0.3
+MAX_POSITION = 0.1
 
 PROP_POSITION = 171.06504777   #@TODO: THIS WILL CHANGE!!!
 
@@ -70,7 +70,7 @@ MIN_TICK_BARS = 60
 
 #@TODO: CHECK FOR OUTDATED FEEDS FOR BOTH TICK AND HISTORICAL DATA
 #@TODO: CANCEL LAST ORDER BEFORE EXECUTING LATEST ONE
-#starting capital = 184.16
+#starting capital = 184.01
 
 
 '''
@@ -121,16 +121,18 @@ while datetime.datetime.now() < end_time:
         hist_read_time =  hist_read_time + HIST_READ_INTERVAL
 
     #READ TICK BLOCKS DATA
-        pickle_in = open('tick_block_history.pickle', 'rb')
-        try:
-            tick_bars = cPickle.load(pickle_in)
-            pickle_in.close()
-        except EOFError:
-            tick_bars = cPickle.load(pickle_in)
-            pickle_in.close()
 
-            #tick bar format: list[[time, vwap, num_trades]]
-        tick_bars = np.array(tick_bars)
+    try:
+        pickle_in = open('tick_block_history.pickle', 'rb')
+        tick_bars = cPickle.load(pickle_in)
+        pickle_in.close()
+    except EOFError:
+        pickle_in = open('tick_block_history.pickle', 'rb')
+        tick_bars = cPickle.load(pickle_in)
+        pickle_in.close()
+
+        #tick bar format: list[[time, vwap, num_trades]]
+    tick_bars = np.array(tick_bars)
 
 
         #Check to see if there are at least 60 blocks in the tick data
@@ -142,8 +144,6 @@ while datetime.datetime.now() < end_time:
     if tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']] <= last_used_block_id:
         print('NO NEW BLOCKS')
         continue
-
-        #Since there's new block, cancel old order
 
         #Record last used block
     last_used_block_id = tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']]
@@ -171,13 +171,16 @@ while datetime.datetime.now() < end_time:
     if abs(trade_rec) > 0:
         isExecute = True
 
+    side = 'BUY'
     #Execute or Not Execute
     if isExecute:
         print('EXECUTE NOW!!')
 
         #First, cancel the old order
-        cancel_order_id = order_man.cancelOrder()
-
+        try:
+            cancel_order_id = order_man.cancelOrder()
+        except:
+            print('Cant cancel order')
         # Are we over MAX_POSITION?
         current_position = pos_man.getCurrentPositionFromAcct() - PROP_POSITION
         print('current position', current_position)
@@ -198,7 +201,7 @@ while datetime.datetime.now() < end_time:
 
         mkt_man = MarketManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size)
     
-        cur_order = mkt_man.makeLimitOrder()
+        cur_order = mkt_man.makeLimitOrder(limit_px=round(vwap, ndigits=2))
         print('signal trade initiated!',cur_order)
 
             #Record the order id of the current order
