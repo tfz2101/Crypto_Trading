@@ -95,7 +95,14 @@ run_time_sec = 60 * 60 * 9
 end_time = start_time + datetime.timedelta(seconds=run_time_sec)
 
 while datetime.datetime.now() < end_time:
-    result = ws.recv()
+    try:
+        result = ws.recv()
+    except _exceptions.WebSocketConnectionClosedException:
+        # Create connection
+        print('Connection Lost')
+        ws = create_connection("wss://ws-feed.pro.coinbase.com")
+        ws.send(json.dumps(message))
+        continue
 
     try:
         #Converts json to dict
@@ -149,12 +156,6 @@ while datetime.datetime.now() < end_time:
                 curBlock['sizeLeft'] -= size_leftover
                 curBlock['prices'].append(px)
         print('curblock', curBlock)
-    except _exceptions.WebSocketConnectionClosedException:
-        # Create connection
-        print('Connection Lost')
-        ws = create_connection("wss://ws-feed.pro.coinbase.com")
-        ws.send(json.dumps(message))
-        continue
     except:
         continue
 

@@ -51,7 +51,7 @@ MAX_POSITION = 0.1
 PROP_POSITION = 171.06504777   #@TODO: THIS WILL CHANGE!!!
 
 GDAX_ZONE = 'Atlantic/Azores'
-SIZE = 0.1
+SIZE = 0.01
 
 
 start_time =  datetime.datetime.now()
@@ -63,27 +63,13 @@ HIST_READ_INTERVAL = datetime.timedelta(seconds=5)
 #Empty order manager
 pos_man = PositionManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, product_acct_id=ETH_ACCT_ID)
 
-#Empty order manager, is string initially
-order_man = 'EMPTY'
+#Empty order manager, is string initiallyorder_man = 'EMPTY'
 last_used_block_id = -1000
 MIN_TICK_BARS = 60
 
 #@TODO: CHECK FOR OUTDATED FEEDS FOR BOTH TICK AND HISTORICAL DATA
-#@TODO: CANCEL LAST ORDER BEFORE EXECUTING LATEST ONE
 #starting capital = 184.01
 
-
-'''
-cur_order = auth_client.buy(price=211,
-                             size=0.1,
-                             product_id=PRODUCT,
-                             post_only=True)
-
-order_id = cur_order['id']
-
-cancel_order_id = auth_client.cancel_order(order_id=order_id)
-print('cancel order id', cancel_order_id)
-'''
 
 
 #MAIN LOOP
@@ -106,14 +92,17 @@ while datetime.datetime.now() < end_time:
             min_5_z = cPickle.load(pickle_5min)
             pickle_5min.close()
         except EOFError:
+            time.sleep(0.1)
             min_5_z = cPickle.load(pickle_5min)
             pickle_5min.close()
         print('zscores 5min', min_5_z)
         pickle_15min = open('zscore_15min.pickle', 'rb')
         try:
+            time.sleep(0.1)
             min_15_z = cPickle.load(pickle_15min)
             pickle_15min.close()
         except EOFError:
+            time.sleep(0.1)
             min_15_z = cPickle.load(pickle_15min)
             pickle_15min.close()
         print('zscores 15min', min_15_z)
@@ -121,45 +110,44 @@ while datetime.datetime.now() < end_time:
         hist_read_time =  hist_read_time + HIST_READ_INTERVAL
 
     #READ TICK BLOCKS DATA
-
     try:
         pickle_in = open('tick_block_history.pickle', 'rb')
         tick_bars = cPickle.load(pickle_in)
         pickle_in.close()
-    except EOFError:
-        pickle_in = open('tick_block_history.pickle', 'rb')
-        tick_bars = cPickle.load(pickle_in)
-        pickle_in.close()
+    #except EOFError:
+    #    time.sleep(0.2)
+    #    pickle_in = open('tick_block_history.pickle', 'rb')
+    #    tick_bars = cPickle.load(pickle_in)
+    #    pickle_in.close()
+    except:
+        continue
+        #@TODO: THIS CATCH ALL IS DANGEROUS
 
-        #tick bar format: list[[time, vwap, num_trades]]
+
+    #tick bar format: list[[time, vwap, num_trades]]
     tick_bars = np.array(tick_bars)
 
 
-        #Check to see if there are at least 60 blocks in the tick data
+    #Check to see if there are at least 60 blocks in the tick data
     if tick_bars.shape[0] < MIN_TICK_BARS:
         print('NOT ENOUGH TICK BARS')
         continue
 
-        #Check if there has been an updated block
+    #Check if there has been an updated block
     if tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']] <= last_used_block_id:
-        print('NO NEW BLOCKS')
         continue
 
-        #Record last used block
+    #Record last used block
     last_used_block_id = tick_bars[tick_bars.shape[0]-1,tick_data_cols['id']]
     pickle_last_block = open('last_used_block_id.pickle', 'wb')
     cPickle.dump(last_used_block_id, pickle_last_block)
     pickle_last_block.close()
 
-    
-
-    #Recalcs Signals with updated Tick Block Data - Only do it if new blocks are present
+    #RECALC TICK BLOCK SIGNAL
     LOOKBACK = 60
 
     price_bars_lookback = tick_bars[(tick_bars.shape[0] - LOOKBACK):tick_bars.shape[0], tick_data_cols['vwap']].astype('float')
-    #print('price bars for ticks', price_bars_lookback)
     num_trades_lookback = tick_bars[(tick_bars.shape[0] - LOOKBACK):tick_bars.shape[0], tick_data_cols['num_trades']].astype('float')
-    #print('num trades', num_trades_lookback)
     vwap = np.dot(price_bars_lookback, num_trades_lookback) / np.sum(num_trades_lookback)
     print('vwap', vwap)
     price_bars_std = np.std(price_bars_lookback)
@@ -171,8 +159,8 @@ while datetime.datetime.now() < end_time:
     if abs(trade_rec) > 0:
         isExecute = True
 
-    side = 'BUY'
-    #Execute or Not Execute
+
+    #EXECUTE OR NOT EXECUTE?
     if isExecute:
         print('EXECUTE NOW!!')
 
@@ -199,6 +187,7 @@ while datetime.datetime.now() < end_time:
         if trade_rec < 0:
             side = 'SELL'
 
+        #EXCECUTE!
         mkt_man = MarketManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size)
     
         cur_order = mkt_man.makeLimitOrder(limit_px=round(vwap, ndigits=2))
@@ -208,11 +197,9 @@ while datetime.datetime.now() < end_time:
         order_id =  cur_order['id']
         order_man = OrderManager(public_client=public_client, auth_client=auth_client, product=PRODUCT, side=side, order_size=size,order_id=order_id)
     
-        #logfile.write('current position: ' + str(cur_pos) + '\n')
-        #When isExecute:
-                #log
-                    #time
-
-
+        logfile.write('Current Time: ' + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + '\n')
+        logfile.write('Trade Side: ' + side + '\n')
+        logfile.write('Price Done: ' + str(vwap) + '\n')
+        logfile.write('Current Position: ' + str(current_position) + '\n')
 
 
