@@ -115,7 +115,7 @@ while datetime.datetime.now() < end_time:
         side = str(result['side'])
         time = result['time']
         time = datetime.datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%f000Z')
-
+        print('time', time)
         transactions.append([time, px, size, side])
 
         if size < curBlock['sizeLeft']:
