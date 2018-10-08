@@ -13,10 +13,9 @@ rd_series = pd.Series(rd, index=data.index.values)
 print(rd_series)
 
 
-x = np.array([1,2,3])
-print('x', x)
-print('mean',np.mean(x))
+x = [1,2,3]
+y = [2,3,4]
+z =  [4,5,6]
 
-a = 3.4
-b = np.nan()
-
+out = pd.DataFrame([x], columns=['x'])
+print('out', out)
