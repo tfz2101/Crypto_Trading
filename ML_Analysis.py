@@ -21,7 +21,7 @@ from sklearn.model_selection import KFold
 
 #KFOLD CROSS VALIDATION ON RANDOM FOREST CLASSIFIER
 '''
-ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_May_To_June.xlsx','ml_input',index_col='Dates')
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_May_To_June.xlsx','ml_input2',index_col='Dates')
 ml_data = ml_data.dropna()
 ml_data = ml_data.drop(['Volume','LAST_PRICE','NUMBER_TICKS','Exec_Buy_Or_Sale'],axis=1)
 print('ml data', ml_data)
@@ -34,19 +34,20 @@ kf = KFold(n_splits=5)
 for train, test in kf.split(ml_data):
     Y_train = Y_[train]
     X_train = X_.ix[train,:]
-    print('train', Y_train)
-    print('test', X_train)
+    #print('train', Y_train)
+    #print('test', X_train)
     Y_test = Y_[test]
     X_test = X_.ix[test,:]
     clf = RFC().fit(X_train, Y_train)
     score = clf.score(X_test, Y_test)
     print('score', score)
-
 '''
+
+
 
 #TRAIN ON DATASET TO PREDICT A SECOND DATASET
 #training dataset
-ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_May_To_June.xlsx','ml_input',index_col='Dates')
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_May_To_June.xlsx','ml_input2',index_col='Dates')
 ml_data = ml_data.dropna()
 ml_data = ml_data.drop(['Volume','LAST_PRICE','NUMBER_TICKS','Exec_Buy_Or_Sale'],axis=1)
 print('ml data', ml_data)
@@ -57,7 +58,7 @@ X_ = ml_data.drop('Y', axis=1)
 clf = RFC().fit(X_, Y_)
 
 #testing dataset
-ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_July_To_August.xlsx','ml_input',index_col='Dates')
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_July_To_August.xlsx','ml_input2',index_col='Dates')
 ml_data = ml_data.dropna()
 ml_data = ml_data.drop(['Volume','LAST_PRICE','NUMBER_TICKS','Exec_Buy_Or_Sale'],axis=1)
 print('ml data', ml_data)
@@ -77,3 +78,16 @@ predicts_proba = clf.predict_proba(X_test)
 output = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
 
 st.write_new(output, 'ml_test.xlsx', 'sheet1')
+
+
+'''
+#CALC EXECUTION LEVELS FOR GIVEN SET OF PRICES
+
+px_data = pd.read_excel('Execution_Levels_Template.xlsx','Price_Data',index_col='Dates')
+px_data = px_data.dropna()
+print('px data', px_data)
+out_data = st.getNextExecutionLevels(px_data)
+print('out_data', out_data)
+
+st.write(out_data, 'Execution_Levels_Template.xlsx', 'execution_pxes')
+'''
