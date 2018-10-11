@@ -2,19 +2,24 @@ import numpy as np
 import pandas as pd
 import datetime
 import time
-from Execution_Algorithms import *
 import sys
 sys.path.append('../')
 from ML_Trading import ML_functions as mlfcn
-from ML_Trading import Signals_Testing as st
+#from ML_Trading import Signals_Testing as st
 from pytz import timezone
 import requests
 import bitmex
+import json
 
+API_FILE = '../bitmex.txt'
+with open(API_FILE) as f:
+    lines = [line.rstrip('\n') for line in open(API_FILE)]
+print(lines)
+client = bitmex.bitmex(test=False, api_key=lines[0], api_secret=lines[1])
 
-client = bitmex.bitmex()
-result = client.Quote.Quote_get(symbol="XBTUSD", reverse=True, count=1).result()
-print(result)
+out = client.Trade.Trade_getBucketed(binSize='5m', symbol='XBTUSD', count=100, reverse=True).result()[0]
+
+print(out)
 
 
 
