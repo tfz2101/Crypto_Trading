@@ -17,36 +17,19 @@ with open(API_FILE) as f:
 print(lines)
 client = bitmex.bitmex(test=False, api_key=lines[0], api_secret=lines[1])
 
-out = client.Trade.Trade_getBucketed(binSize='5m', symbol='XBTUSD', count=100, reverse=True).result()[0]
 
+start_date = datetime.datetime(2018, 8, 4, 0, 0, 0)
+bars = 750
+bar_unit = 5
+delta = datetime.timedelta(minutes=bars*bar_unit)
+end_date = start_date + delta
+
+
+out = client.Trade.Trade_getBucketed(binSize='5m', symbol='ETHUSD', count=bars, reverse=False, startTime = start_date, endTime = end_date).result()[0]
 print(out)
 
 
 
 
 
-'''
-start_date = datetime.datetime(2018, 7, 26, 0, 0, 0)
-start_date = time.mktime(start_date.timetuple())
-print('start date',start_date)
-url = "https://api.bitfinex.com/v1/lends/eth/?limit_lends=4000?timestamp=" + str(start_date)
 
-response = requests.request("GET", url)
-
-data = response.json()
-transactions = []
-for trade in data:
-
-    rate = trade['rate']
-    amount_lent = trade['amount_lent']
-    amount_used = trade['amount_used']
-    ts = int(trade['timestamp'])
-    time = datetime.datetime.fromtimestamp(ts)
-    print('time', time)
-    transactions.append([time, rate, amount_lent, amount_used])
-
-transactions_pd = pd.DataFrame(transactions, columns=['time', 'rate', 'amount_lent', 'amount_used'])
-
-print(transactions_pd)
-st.write(transactions_pd, 'eth_lending_rates.xlsx','sheet1')
-'''
