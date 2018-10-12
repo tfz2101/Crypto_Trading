@@ -4,16 +4,24 @@ import datetime
 import time
 from Execution_Algorithms import *
 import sys
-sys.path.append('../')
+sys.path.append('../../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
 from pytz import timezone
 import requests
-
-
 import urllib.request
-url = "https://api.nomics.com/v1/currencies?key=2018-09-demo-dont-deploy-b69315e440beb145"
-print(urllib.request.urlopen(url).read())
+import json
+
+API_FILE = '../../nomics.txt'
+with open(API_FILE) as f:
+    lines = [line.rstrip('\n') for line in open(API_FILE)]
+print(lines)
+
+KEY = str(lines[0])
+
+url = "https://api.nomics.com/v1/markets?key=" + KEY
+result = json.loads(urllib.request.urlopen(url).read())
+print(result)
 
 
 
