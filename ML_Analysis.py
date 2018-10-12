@@ -46,6 +46,7 @@ for train, test in kf.split(ml_data):
 
 
 #TRAIN ON DATASET TO PREDICT A SECOND DATASET
+'''
 #training dataset
 ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_May_To_June.xlsx','ml_input2',index_col='Dates')
 ml_data = ml_data.dropna()
@@ -78,9 +79,9 @@ predicts_proba = clf.predict_proba(X_test)
 output = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
 
 st.write_new(output, 'ml_test.xlsx', 'sheet1')
-
-
 '''
+
+
 #CALC EXECUTION LEVELS FOR GIVEN SET OF PRICES
 
 px_data = pd.read_excel('Execution_Levels_Template.xlsx','Price_Data',index_col='Dates')
@@ -90,4 +91,3 @@ out_data = st.getNextExecutionLevels(px_data)
 print('out_data', out_data)
 
 st.write(out_data, 'Execution_Levels_Template.xlsx', 'execution_pxes')
-'''

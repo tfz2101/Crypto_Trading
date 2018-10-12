@@ -269,8 +269,9 @@ print('flux data', flux_data)
 st.write(flux_data, 'eth_dataset_07_15_2018_Bull_Market_FLUXDATA.xlsx')
 '''
 
-'''
+
 #RETURNS STATISTICAL TRAITS OF TIME SERIES
+'''
 stat_data = pd.read_excel('ETH_May_To_August_Price_Series.xlsx',sheetname='Sheet1',index_col='Dates')
 print(stat_data)
 
