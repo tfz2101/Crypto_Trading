@@ -20,8 +20,8 @@ from sklearn.model_selection import KFold
 
 
 #KFOLD CROSS VALIDATION ON RANDOM FOREST CLASSIFIER
-'''
-ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_May_To_June.xlsx','ml_input2',index_col='Dates')
+
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
 ml_data = ml_data.dropna()
 ml_data = ml_data.drop(['Volume','LAST_PRICE','NUMBER_TICKS','Exec_Buy_Or_Sale'],axis=1)
 print('ml data', ml_data)
@@ -41,7 +41,7 @@ for train, test in kf.split(ml_data):
     clf = RFC().fit(X_train, Y_train)
     score = clf.score(X_test, Y_test)
     print('score', score)
-'''
+
 
 
 
