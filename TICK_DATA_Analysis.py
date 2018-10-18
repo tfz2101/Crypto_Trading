@@ -219,15 +219,14 @@ data = getTimeIndex(data)
 print(data)
 #st.write(data, 'eth_dataset_7_15_7_18_datesindex.xlsx','sheet1')
 
-
+'''
 #GET FIXED VOLUME DATA
 block_data, full_block_data = getFixedVolumeData(data, BLOCK_SIZE)#col_name = ['time', 'price', 'size', 'side', 'end_time', 'VWAP', 'num_trades']
 col_name = ['end_time','vwap', 'num_trades']
 block_data = pd.DataFrame(block_data, columns=col_name)
 block_data = block_data.set_index('end_time')
 st.write(block_data, 'fixed_volume_streaming_data_VWAP_9_21_3_raw_data.xlsx','Sheet1')
-
-
+'''
 
 '''
 #GET EXECUTION LEVELS FOR TICK DATA
@@ -269,10 +268,10 @@ print('flux data', flux_data)
 st.write(flux_data, 'eth_dataset_07_15_2018_Bull_Market_FLUXDATA.xlsx')
 '''
 
-
-#RETURNS STATISTICAL TRAITS OF TIME SERIES
 '''
-stat_data = pd.read_excel('ETH_May_To_August_Price_Series.xlsx',sheetname='Sheet1',index_col='Dates')
+#RETURNS STATISTICAL TRAITS OF TIME SERIES
+
+stat_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx',sheetname='traits_input',index_col='Dates')
 print(stat_data)
 
 
@@ -287,21 +286,7 @@ stat_fcns = [rolling_stat_fcns.acf_fcn_ith_cor, rolling_stat_fcns.dickeyfuller_f
 traits_data = st.getRollingTraits(stat_data, stat_fcns, gap=30)
 print(traits_data)
 
-st.write(traits_data, 'traits_data_may_august.xlsx','sheet1')
-'''
-
-'''
-r_data = pd.read_excel('ETC_Diff_Freq_Momentum.xlsx','R_INPUT',index_col='Date')
-r_data = r_data.dropna()
-print('r_data', r_data)
-st.write(r_data, 'R_Scripts/signals.xlsx','sheet1')
+st.write_new(traits_data, 'traits_data_bit_mex.xlsx','sheet1')
 '''
 
 
-
-'''
-#CLEANS OUT NA FOR R DATASET
-data = pd.read_excel('ETH_5MIN.xlsx','Sheet1',index_col='Dates')
-data =  data.dropna()
-st.write(data, 'ETH_5MIN_CLEAN.xlsx', 'sheet1')
-'''

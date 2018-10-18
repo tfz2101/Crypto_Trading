@@ -23,7 +23,7 @@ from sklearn.model_selection import KFold
 
 ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
 ml_data = ml_data.dropna()
-ml_data = ml_data.drop(['Volume','LAST_PRICE','NUMBER_TICKS','Exec_Buy_Or_Sale'],axis=1)
+ml_data = ml_data.drop(['Y_exec_60_buy'],axis=1)
 print('ml data', ml_data)
 
 Y_ = ml_data['Y']
@@ -83,7 +83,7 @@ st.write_new(output, 'ml_test.xlsx', 'sheet1')
 
 
 #CALC EXECUTION LEVELS FOR GIVEN SET OF PRICES
-
+'''
 px_data = pd.read_excel('Execution_Levels_Template.xlsx','Price_Data',index_col='Dates')
 px_data = px_data.dropna()
 print('px data', px_data)
@@ -91,3 +91,4 @@ out_data = st.getNextExecutionLevels(px_data)
 print('out_data', out_data)
 
 st.write(out_data, 'Execution_Levels_Template.xlsx', 'execution_pxes')
+'''
