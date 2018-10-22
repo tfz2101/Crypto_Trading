@@ -259,8 +259,9 @@ print('r_2', r_2)
 
 
 
-'''
+
 #FOR TICK DATA, CALCULATE DAMPENNESS OF TRADES TO SEE IF THE BID SIDE OR OFFER SIDE CAN ABSORB MORE 
+'''
 tick_data = pd.read_excel('eth_dataset_07_15_2018_Bull_Market.xlsx', sheetname='refined_data_clean', index_col='time')
 
 flux_data  = getBuySellFlux(tick_data, 30, 200)
@@ -268,10 +269,10 @@ print('flux data', flux_data)
 st.write(flux_data, 'eth_dataset_07_15_2018_Bull_Market_FLUXDATA.xlsx')
 '''
 
-'''
+
 #RETURNS STATISTICAL TRAITS OF TIME SERIES
 
-stat_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx',sheetname='traits_input',index_col='Dates')
+stat_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC_2.xlsx',sheetname='traits_input',index_col='Dates')
 print(stat_data)
 
 
@@ -286,7 +287,7 @@ stat_fcns = [rolling_stat_fcns.acf_fcn_ith_cor, rolling_stat_fcns.dickeyfuller_f
 traits_data = st.getRollingTraits(stat_data, stat_fcns, gap=30)
 print(traits_data)
 
-st.write_new(traits_data, 'traits_data_bit_mex.xlsx','sheet1')
-'''
+st.write_new(traits_data, 'traits_data_bit_mex2.xlsx','sheet1')
+
 
 

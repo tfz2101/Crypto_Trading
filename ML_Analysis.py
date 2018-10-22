@@ -17,13 +17,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import KFold
-
+from sklearn.metrics import confusion_matrix
 
 #KFOLD CROSS VALIDATION ON RANDOM FOREST CLASSIFIER
-
+'''
 ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
 ml_data = ml_data.dropna()
-ml_data = ml_data.drop(['Y_exec_60_buy'],axis=1)
 print('ml data', ml_data)
 
 Y_ = ml_data['Y']
@@ -41,30 +40,65 @@ for train, test in kf.split(ml_data):
     clf = RFC().fit(X_train, Y_train)
     score = clf.score(X_test, Y_test)
     print('score', score)
+'''
 
+
+#TRAIN SPLIT TEST
+'''
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
+ml_data = ml_data.dropna()
+
+#buy and sell
+Y_long = ml_data['Y_long']
+X = ml_data.drop(['Y_long','Y_short'], axis=1)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y_long, train_size= 0.75, random_state=0, shuffle=False)
+
+#COLUMNS =[Y,..., index=datetime]
+clf = RFC().fit(X_train, Y_train)
+pred_long = pd.DataFrame(clf.predict(X_test), index = X_test.index.values)
+pred_long_probs = pd.DataFrame(clf.predict_proba(X_test), index = X_test.index.values)
+score = clf.score(X_test, Y_test)
+print('score', score)
+
+#sell and buy back
+Y_short = ml_data['Y_short']
+X = ml_data.drop(['Y_long','Y_short'], axis=1)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y_short, train_size= 0.75, random_state=0, shuffle=False)
+
+clf = RFC().fit(X_train, Y_train)
+pred_short = pd.DataFrame(clf.predict(X_test), index = X_test.index.values)
+pred_short_probs = pd.DataFrame(clf.predict_proba(X_test), index = X_test.index.values)
+score = clf.score(X_test, Y_test)
+print('score', score)
+
+#predictions = pd.concat([pred_long, pred_short])
+
+st.write_new(pred_long, 'predictions1.xlsx', 'pred_long')
+st.write(pred_long_probs, 'predictions1.xlsx', 'pred_long_probs')
+st.write(pred_short, 'predictions1.xlsx', 'pred_short')
+st.write(pred_short_probs, 'predictions1.xlsx', 'pred_short_probs')
+'''
 
 
 
 #TRAIN ON DATASET TO PREDICT A SECOND DATASET
 '''
 #training dataset
-ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_May_To_June.xlsx','ml_input2',index_col='Dates')
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
 ml_data = ml_data.dropna()
-ml_data = ml_data.drop(['Volume','LAST_PRICE','NUMBER_TICKS','Exec_Buy_Or_Sale'],axis=1)
 print('ml data', ml_data)
-
-Y_ = ml_data['Y']
-X_ = ml_data.drop('Y', axis=1)
+Y = 'Y_long'
+Y_ = ml_data[Y]
+X_ = ml_data.drop(['Y_long', 'Y_short'], axis=1)
 
 clf = RFC().fit(X_, Y_)
 
 #testing dataset
-ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_July_To_August.xlsx','ml_input2',index_col='Dates')
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC_2.xlsx','ml_input',index_col='Dates')
 ml_data = ml_data.dropna()
-ml_data = ml_data.drop(['Volume','LAST_PRICE','NUMBER_TICKS','Exec_Buy_Or_Sale'],axis=1)
 print('ml data', ml_data)
-Y_test = ml_data['Y']
-X_test = ml_data.drop('Y', axis=1)
+Y_test = ml_data[Y]
+X_test = ml_data.drop(['Y_long', 'Y_short'], axis=1)
 
 
 score = clf.score(X_test, Y_test)
@@ -76,10 +110,67 @@ predicts_log_proba = clf.predict_log_proba(X_test)
 print('preidcts proba', predicts_log_proba)
 predicts_proba = clf.predict_proba(X_test)
 
-output = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
+predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
+predicts_proba = pd.DataFrame(predicts_proba, index=X_test.index.values)
 
-st.write_new(output, 'ml_test.xlsx', 'sheet1')
+confusion = confusion_matrix(Y_test.values, predicts.values)
+print('confusion matrix', confusion)
+#st.write_new(predicts, 'ml_test_long.xlsx', 'predictions')
+#st.write(predicts_proba, 'ml_test_long.xlsx', 'prediction_probs')
 '''
+
+
+#TRAIN ON DATASET TO PREDICT A SECOND DATASET USING RF_REGRESSION
+N_ESTIMATORS = 200
+MAX_DEPTH = 8
+
+#LONG SIDE
+
+#training dataset
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
+ml_data = ml_data.dropna()
+Y = 'Y_exec_60_buy'
+Y_ = ml_data[Y]
+X_ = ml_data.drop(['Y_exec_60_buy', 'Y_exec_60_sell'], axis=1)
+
+clf = RF(n_estimators=N_ESTIMATORS, max_depth=MAX_DEPTH).fit(X_, Y_)
+print('features column', X_.columns.values)
+print('feature important', clf.feature_importances_)
+#testing dataset
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC_2.xlsx','ml_input',index_col='Dates')
+ml_data = ml_data.dropna()
+Y_test = ml_data[Y]
+X_test = ml_data.drop(['Y_exec_60_buy', 'Y_exec_60_sell'], axis=1)
+
+predicts = clf.predict(X_test).tolist()
+
+predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
+st.write_overwritesheet(predicts, 'ml_test.xlsx', 'long_predictions')  #ml_test.xlsx already exists, has formula sheets embedded in it
+
+
+#SHORT SIDE
+#training dataset
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
+ml_data = ml_data.dropna()
+Y = 'Y_exec_60_sell'
+Y_ = ml_data[Y]
+X_ = ml_data.drop(['Y_exec_60_buy', 'Y_exec_60_sell'], axis=1)
+
+clf = RF(n_estimators=N_ESTIMATORS, max_depth=MAX_DEPTH).fit(X_, Y_)
+
+#testing dataset
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC_2.xlsx','ml_input',index_col='Dates')
+ml_data = ml_data.dropna()
+Y_test = ml_data[Y]
+X_test = ml_data.drop(['Y_exec_60_buy', 'Y_exec_60_sell'], axis=1)
+
+predicts = clf.predict(X_test).tolist()
+
+predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
+st.write_overwritesheet(predicts, 'ml_test.xlsx', 'short_predictions')
+
+
+
 
 
 #CALC EXECUTION LEVELS FOR GIVEN SET OF PRICES
@@ -91,4 +182,17 @@ out_data = st.getNextExecutionLevels(px_data)
 print('out_data', out_data)
 
 st.write(out_data, 'Execution_Levels_Template.xlsx', 'execution_pxes')
+'''
+
+#RETURNS STATISTICAL TRAITS OF TIME SERIES
+'''
+stat_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC_2.xlsx',sheetname='traits_input',index_col='Dates')
+
+rolling_stat_fcns = sf.RollingTraitStatFcns()
+
+stat_fcns = [rolling_stat_fcns.acf_fcn_ith_cor, rolling_stat_fcns.dickeyfuller_fcn, rolling_stat_fcns.hurstExp]
+traits_data = st.getRollingTraits(stat_data, stat_fcns, gap=30)
+print(traits_data)
+
+st.write_new(traits_data, 'traits_data_bit_mex2.xlsx','sheet1')
 '''
