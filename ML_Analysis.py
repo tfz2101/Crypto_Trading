@@ -121,11 +121,11 @@ print('confusion matrix', confusion)
 
 
 #TRAIN ON DATASET TO PREDICT A SECOND DATASET USING RF_REGRESSION
+'''
 N_ESTIMATORS = 200
 MAX_DEPTH = 8
 
 #LONG SIDE
-
 #training dataset
 ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
 ml_data = ml_data.dropna()
@@ -168,10 +168,16 @@ predicts = clf.predict(X_test).tolist()
 
 predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
 st.write_overwritesheet(predicts, 'ml_test.xlsx', 'short_predictions')
+'''
 
 
-
-
+#COMBINE DIFFERENT DATASETS
+ml_data1 = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
+ml_data1 = ml_data1.dropna()
+ml_data2 = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC_2.xlsx','ml_input',index_col='Dates')
+ml_data2 = ml_data2.dropna()
+data = pd.concat([ml_data1, ml_data2])
+print('ml data', data)
 
 #CALC EXECUTION LEVELS FOR GIVEN SET OF PRICES
 '''
