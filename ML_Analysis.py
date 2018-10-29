@@ -170,14 +170,25 @@ predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictio
 st.write_overwritesheet(predicts, 'ml_test.xlsx', 'short_predictions')
 '''
 
-
-#COMBINE DIFFERENT DATASETS
+#ROLLING ML FIT AND PREDICTION ON COMBINED DATASETS
+#combine two datasets
 ml_data1 = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
 ml_data1 = ml_data1.dropna()
 ml_data2 = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC_2.xlsx','ml_input',index_col='Dates')
 ml_data2 = ml_data2.dropna()
 data = pd.concat([ml_data1, ml_data2])
-print('ml data', data)
+Y = 'Y_exec_60_buy'
+Y_drop = 'Y_exec_60_sell'
+
+data = data.drop(Y_drop, axis = 1)
+
+Y_ind = len(data.columns.tolist())
+
+kwaargs = {'n_estimators': 200}
+preds = mlfcn.getBlendedSignal(data=data, ml_model = RF, gap = 20000, Y_index = Y_ind, **kwaargs)
+preds = pd.DataFrame(preds)
+st.write_new(preds, 'ml_preds','sheet1')
+
 
 #CALC EXECUTION LEVELS FOR GIVEN SET OF PRICES
 '''

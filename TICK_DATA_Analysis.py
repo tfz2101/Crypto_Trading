@@ -184,9 +184,7 @@ def getNextExecutionLevel(orig_data, size, side, colName):
                     sizeToDo = min(sizeLeft, data.iloc[j, 1])
                     volume.append(sizeToDo)
                     sizeLeft -= sizeToDo
-        #print('volumes',volume)
-        #print('prices', prices)
-        #print('sizeLeft', sizeLeft)
+
         if sizeLeft <= 0:
             exec_price = sumproduct(prices, volume)/ sum(volume)
             print('exec price', exec_price)
