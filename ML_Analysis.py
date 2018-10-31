@@ -7,11 +7,9 @@ from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
 from ML_Trading import Stat_Fcns as sf
 
-from sklearn.tree import DecisionTreeRegressor as DTC
 from sklearn.tree import export_graphviz
 from sklearn.ensemble import RandomForestRegressor as RF
 from sklearn.ensemble import RandomForestClassifier as RFC
-import pydotplus
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
@@ -43,17 +41,20 @@ for train, test in kf.split(ml_data):
 '''
 
 
-#TRAIN SPLIT TEST
+#TRAIN SPLIT TEST WITH RFC
 '''
-ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
+N_ESTIMATORS = 200
+MAX_DEPTH = 8
+
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC3.xlsx','ml_input',index_col='Dates')
 ml_data = ml_data.dropna()
 
 #buy and sell
-Y_long = ml_data['Y_long']
-X = ml_data.drop(['Y_long','Y_short'], axis=1)
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y_long, train_size= 0.75, random_state=0, shuffle=False)
+Y_long = ml_data['Y_exec_60_buy']
+X = ml_data.drop(['Y_exec_60_buy','Y_exec_60_sell'], axis=1)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y_long, train_size= 0.70, random_state=0, shuffle=False)
 
-#COLUMNS =[Y,..., index=datetime]
+#columns =[Y,..., index=datetime]
 clf = RFC().fit(X_train, Y_train)
 pred_long = pd.DataFrame(clf.predict(X_test), index = X_test.index.values)
 pred_long_probs = pd.DataFrame(clf.predict_proba(X_test), index = X_test.index.values)
@@ -61,9 +62,9 @@ score = clf.score(X_test, Y_test)
 print('score', score)
 
 #sell and buy back
-Y_short = ml_data['Y_short']
-X = ml_data.drop(['Y_long','Y_short'], axis=1)
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y_short, train_size= 0.75, random_state=0, shuffle=False)
+Y_short = ml_data['Y_exec_60_sell']
+X = ml_data.drop(['Y_exec_60_buy','Y_exec_60_sell'], axis=1)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y_short, train_size= 0.70, random_state=0, shuffle=False)
 
 clf = RFC().fit(X_train, Y_train)
 pred_short = pd.DataFrame(clf.predict(X_test), index = X_test.index.values)
@@ -78,6 +79,35 @@ st.write(pred_long_probs, 'predictions1.xlsx', 'pred_long_probs')
 st.write(pred_short, 'predictions1.xlsx', 'pred_short')
 st.write(pred_short_probs, 'predictions1.xlsx', 'pred_short_probs')
 '''
+
+
+#TRAIN SPLIT TEST WITH RF Regression
+N_ESTIMATORS = 200
+MAX_DEPTH = 8
+TRAIN_SIZE = 0.7
+
+ml_data = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC_3.xlsx','ml_input',index_col='Dates')
+ml_data = ml_data.dropna()
+
+#buy and sell
+Y_long = ml_data['Y_exec_60_buy']
+X = ml_data.drop(['Y_exec_60_buy','Y_exec_60_sell'], axis=1)
+X_train, X_test, Y_train, Y_test = mlfcn.trainTestSplit(X, Y_long, trainsplit= TRAIN_SIZE)
+
+    #columns =[Y,..., index=datetime]
+clf = RF().fit(X_train, Y_train)
+pred_long = pd.DataFrame(clf.predict(X_test), index = X_test.index.values)
+
+#sell and buy back
+Y_short = ml_data['Y_exec_60_sell']
+X = ml_data.drop(['Y_exec_60_buy','Y_exec_60_sell'], axis=1)
+X_train, X_test, Y_train, Y_test = mlfcn.trainTestSplit(X, Y_short, trainsplit= TRAIN_SIZE)
+
+clf = RF().fit(X_train, Y_train)
+pred_short = pd.DataFrame(clf.predict(X_test), index = X_test.index.values)
+
+st.write_overwritesheet(pred_long, 'ml_test.xlsx', 'long_predictions')
+st.write_overwritesheet(pred_short, 'ml_test.xlsx', 'short_predictions')
 
 
 
@@ -196,7 +226,7 @@ st.write_new(preds, 'ml_preds','sheet1')
 
 
 #CALC EXECUTION LEVELS FOR GIVEN SET OF PRICES
-
+'''
 px_data = pd.read_excel('Execution_Levels_Template.xlsx','Price_Data',index_col='Dates')
 px_data = px_data.dropna()
 print('px data', px_data)
@@ -204,7 +234,7 @@ out_data = st.getNextExecutionLevels(px_data)
 print('out_data', out_data)
 
 st.write(out_data, 'Execution_Levels_Template.xlsx', 'execution_pxes')
-
+'''
 
 
 #RETURNS STATISTICAL TRAITS OF TIME SERIES
