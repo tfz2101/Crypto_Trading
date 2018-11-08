@@ -82,6 +82,7 @@ st.write(pred_short_probs, 'predictions1.xlsx', 'pred_short_probs')
 
 
 #TRAIN SPLIT TEST WITH RF Regression
+'''
 N_ESTIMATORS = 200
 MAX_DEPTH = 8
 TRAIN_SIZE = 0.7
@@ -108,6 +109,7 @@ pred_short = pd.DataFrame(clf.predict(X_test), index = X_test.index.values)
 
 st.write_overwritesheet(pred_long, 'ml_test.xlsx', 'long_predictions')
 st.write_overwritesheet(pred_short, 'ml_test.xlsx', 'short_predictions')
+'''
 
 
 
@@ -152,7 +154,6 @@ print('confusion matrix', confusion)
 
 
 #TRAIN ON DATASET TO PREDICT A SECOND DATASET USING RF_REGRESSION
-'''
 N_ESTIMATORS = 200
 MAX_DEPTH = 8
 
@@ -165,7 +166,7 @@ Y = 'Y_exec_60_buy'
 Y_ = ml_data[Y]
 X_ = ml_data.drop(['Y_exec_60_buy', 'Y_exec_60_sell'], axis=1)
 
-clf = RF(n_estimators=N_ESTIMATORS, max_depth=MAX_DEPTH).fit(X_, Y_)
+clf = RF(n_estimators=N_ESTIMATORS).fit(X_, Y_)
 print('features column', X_.columns.values)
 print('feature important', clf.feature_importances_)
 
@@ -179,8 +180,7 @@ X_test = ml_data.drop(['Y_exec_60_buy', 'Y_exec_60_sell'], axis=1)
 predicts = clf.predict(X_test).tolist()
 
 predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
-st.write_overwritesheet(predicts, 'ml_test.xlsx', 'long_predictions')  #ml_test.xlsx already exists, has formula sheets embedded in it
-
+st.write_overwritesheet(predicts, 'RF_Regression_Template.xlsx', 'long_predictions')  #ml_test.xlsx already exists, has formula sheets embedded in it
 
 #SHORT SIDE
 #training dataset
@@ -199,12 +199,13 @@ X_test = ml_data.drop(['Y_exec_60_buy', 'Y_exec_60_sell'], axis=1)
 predicts = clf.predict(X_test).tolist()
 
 predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
-st.write_overwritesheet(predicts, 'ml_test.xlsx', 'short_predictions')
-'''
+st.write_overwritesheet(predicts, 'RF_Regression_Template.xlsx', 'short_predictions')
+
 
 
 #ROLLING ML FIT AND PREDICTION ON COMBINED DATASETS
 '''
+#This Sht is broken, make it work
 #combine two datasets
 ml_data1 = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
 ml_data1 = ml_data1.dropna()
@@ -215,13 +216,17 @@ Y = 'Y_exec_60_buy'
 Y_drop = 'Y_exec_60_sell'
 
 data = data.drop(Y_drop, axis = 1)
+Y_ind = 4
 
-Y_ind = len(data.columns.tolist())-1
+print('data',data)
 
 kwaargs = {'n_estimators': 100}
-preds = mlfcn.getBlendedSignal(data=data, ml_model = RF, gap = 20000, Y_index = Y_ind, **kwaargs)
+
+data = data.drop('Unnamed: 10', axis=1)
+data = data.iloc[0:21060,:]
+preds = mlfcn.getBlendedSignal(data=data, ml_model = RF, gap = 20000, Y_index = Y_ind, lag= 62, **kwaargs)
 preds = pd.DataFrame(preds)
-st.write_new(preds, 'ml_preds','sheet1')
+st.write_new(preds, 'ml_preds.xlsx','sheet1')
 '''
 
 
