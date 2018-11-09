@@ -4,7 +4,7 @@ import datetime
 import time
 from Execution_Algorithms import *
 import sys
-sys.path.append('../')
+sys.path.append('../../')
 from ML_Trading import ML_functions as mlfcn
 from ML_Trading import Signals_Testing as st
 from pytz import timezone
@@ -32,10 +32,10 @@ print(client.order_book(symbol, parameters))
 
 
 
-start_date = datetime.datetime(2018, 7, 26, 0, 0, 0)
+start_date = datetime.datetime(2018, 4, 26, 0, 0, 0)
 start_date = time.mktime(start_date.timetuple())
 print('start date',start_date)
-url = "https://api.bitfinex.com/v1/lends/eth/?limit_lends=4000?timestamp=" + str(start_date)
+url = "https://api.bitfinex.com/v1/lends/btc/?limit_lends=5000?timestamp=" + str(start_date)
 
 response = requests.request("GET", url)
 
@@ -54,4 +54,4 @@ for trade in data:
 transactions_pd = pd.DataFrame(transactions, columns=['time', 'rate', 'amount_lent', 'amount_used'])
 
 print(transactions_pd)
-st.write(transactions_pd, 'eth_lending_rates.xlsx','sheet1')
+#st.write_new(transactions_pd, 'btc_lending_rates2.xlsx','sheet1')
