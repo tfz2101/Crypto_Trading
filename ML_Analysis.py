@@ -159,7 +159,7 @@ MAX_DEPTH = 8
 
 #LONG SIDE
 #training dataset
-ml_data_tr = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC_2.xlsx','ml_input',index_col='Dates')
+ml_data_tr = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
 ml_data_tr = ml_data_tr.dropna()
 ml_data = ml_data_tr
 Y = 'Y_exec_60_buy'
@@ -171,7 +171,7 @@ print('features column', X_.columns.values)
 print('feature important', clf.feature_importances_)
 
 #testing dataset
-ml_data_te = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
+ml_data_te = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC_2.xlsx','ml_input',index_col='Dates')
 ml_data_te = ml_data_te.dropna()
 ml_data = ml_data_te
 Y_test = ml_data[Y]
@@ -180,7 +180,7 @@ X_test = ml_data.drop(['Y_exec_60_buy', 'Y_exec_60_sell'], axis=1)
 predicts = clf.predict(X_test).tolist()
 
 predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
-#st.write_overwritesheet(predicts, 'RF_Regression_Template.xlsx', 'long_predictions')  #ml_test.xlsx already exists, has formula sheets embedded in it
+st.write_overwritesheet(predicts, 'RF_Regression_Template.xlsx', 'long_predictions')  #ml_test.xlsx already exists, has formula sheets embedded in it
 
 #SHORT SIDE
 #training dataset
@@ -199,7 +199,7 @@ X_test = ml_data.drop(['Y_exec_60_buy', 'Y_exec_60_sell'], axis=1)
 predicts = clf.predict(X_test).tolist()
 
 predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
-#st.write_overwritesheet(predicts, 'RF_Regression_Template.xlsx', 'short_predictions')
+st.write_overwritesheet(predicts, 'RF_Regression_Template.xlsx', 'short_predictions')
 
 
 
