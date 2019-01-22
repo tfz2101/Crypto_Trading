@@ -34,7 +34,7 @@ for train, test in kf.split(ml_data):
     #print('train', Y_train)
     #print('test', X_train)
     Y_test = Y_[test]
-    X_test = X_.ix[test,:]
+    X_test = X_.ix[test,:]     
     clf = RFC().fit(X_train, Y_train)
     score = clf.score(X_test, Y_test)
     print('score', score)
@@ -154,10 +154,11 @@ print('confusion matrix', confusion)
 
 
 #TRAIN ON DATASET TO PREDICT A SECOND DATASET USING RF_REGRESSION
+'''
 N_ESTIMATORS = 200
 MAX_DEPTH = 8
 
-#LONG SIDE
+    #LONG SIDE
 #training dataset
 ml_data_tr = pd.read_excel('ETC_Diff_Freq_Momentum_BITMEX_BTC.xlsx','ml_input',index_col='Dates')
 ml_data_tr = ml_data_tr.dropna()
@@ -182,7 +183,7 @@ predicts = clf.predict(X_test).tolist()
 predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
 st.write_overwritesheet(predicts, 'RF_Regression_Template.xlsx', 'long_predictions')  #ml_test.xlsx already exists, has formula sheets embedded in it
 
-#SHORT SIDE
+    #SHORT SIDE
 #training dataset
 ml_data = ml_data_tr
 Y = 'Y_exec_60_sell'
@@ -200,7 +201,7 @@ predicts = clf.predict(X_test).tolist()
 
 predicts = pd.DataFrame(predicts, index=X_test.index.values, columns=['predictions'])
 st.write_overwritesheet(predicts, 'RF_Regression_Template.xlsx', 'short_predictions')
-
+'''
 
 
 #ROLLING ML FIT AND PREDICTION ON COMBINED DATASETS
